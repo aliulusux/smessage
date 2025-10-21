@@ -9,12 +9,23 @@ import MessageInput from "../components/MessageInput.jsx"
 export default function Chat(){
   const { channelId } = useParams()
   const nav = useNavigate()
-  const username = useMemo(()=>localStorage.getItem("username") || `guest-${Math.floor(Math.random()*9999)}`,[])
   const [channel,setChannel] = useState(null)
   const [messages,setMessages] = useState([])
   const [users,setUsers] = useState([])
   const [openSettings,setOpenSettings] = useState(false)
   const listRef = useRef(null)
+
+  //user 
+  useEffect(()=>{
+    const updateActive = async ()=>{
+      await supabase.from("users")
+        .update({ last_active: new Date().toISOString() })
+        .eq("username", username)
+    }
+    updateActive()
+    const interval = setInterval(updateActive, 30000) // every 30s
+    return ()=> clearInterval(interval)
+  },[username])
 
   // Load channel + initial messages
   useEffect(()=>{

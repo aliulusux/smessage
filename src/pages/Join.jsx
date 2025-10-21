@@ -2,20 +2,51 @@ import { useEffect, useState } from "react"
 import ChannelList from "../components/ChannelList.jsx"
 import CreateChannelModal from "../components/CreateChannelModal.jsx"
 import { useNavigate } from "react-router-dom"
+import { supabase } from "../lib/supabase"
 
 export default function Join(){
   const nav = useNavigate()
   const [username,setUsername] = useState(localStorage.getItem("username") || "")
   const [open,setOpen] = useState(false)
+  const [loading,setLoading] = useState(false)
 
-  useEffect(()=>{ localStorage.setItem("username", username) },[username])
+  useEffect(()=>{ 
+    if(username.trim()) localStorage.setItem("username", username)
+  },[username])
+
+  const registerUser = async (name)=>{
+    // Check if username exists
+    const { data: exists } = await supabase.from("users")
+      .select("id").eq("username", name).maybeSingle()
+    if(exists){
+      alert("This username is already taken. Please choose another one.")
+      return false
+    }
+
+    // Insert new user
+    const { error } = await supabase.from("users")
+      .insert({ username: name })
+    if(error){
+      alert("Error creating user: " + error.message)
+      return false
+    }
+    return true
+  }
 
   const joinChannel = async (ch)=>{
+    if(!username.trim()){ alert("Please enter a username first."); return }
+
+    setLoading(true)
+    const ok = await registerUser(username.trim())
+    if(!ok){ setLoading(false); return }
+
     if(ch.is_private){
       const pass = prompt("This channel is private. Enter password:")
-      if(pass === null) return
-      if(pass !== ch.password){ alert("Wrong password"); return }
+      if(pass === null){ setLoading(false); return }
+      if(pass !== ch.password){ alert("Wrong password"); setLoading(false); return }
     }
+
+    setLoading(false)
     nav(`/chat/${ch.id}`)
   }
 
@@ -37,10 +68,7 @@ export default function Join(){
         </div>
 
         <div style={{marginTop:12}}>
-          <ChannelList onJoin={(c)=>{
-            if(!username.trim()){ alert("Please enter a username first."); return }
-            joinChannel(c)
-          }}/>
+          <ChannelList onJoin={(c)=>!loading && joinChannel(c)}/>
         </div>
       </div>
 
