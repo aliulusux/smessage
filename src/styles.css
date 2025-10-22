@@ -434,6 +434,28 @@ input, select {
   cursor: pointer;
 }
 
+.theme-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 10px;
+  flex-shrink: 0;
+  background: var(--dot-color, #fff);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-option:hover .theme-dot {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.glass-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 
 
