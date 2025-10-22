@@ -1,7 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
-
+export const THEME_SWATCH = {
+  sunset: "linear-gradient(135deg, #ff9966, #ff5e62)",
+  neon: "linear-gradient(135deg, #00ffe0, #0078ff)",
+  dark: "linear-gradient(135deg, #111, #333)",
+  light: "linear-gradient(135deg, #eee, #ccc)",
+  amethyst: "linear-gradient(135deg, #9D50BB, #6E48AA)",
+  pastel: "linear-gradient(135deg, #fbc2eb, #a6c1ee)",
+  iced: "linear-gradient(135deg, #a1c4fd, #c2e9fb)",
+  ocean: "linear-gradient(135deg, #2E3192, #1BFFFF)",
+  forest: "linear-gradient(135deg, #134E5E, #71B280)",
+  sand: "linear-gradient(135deg, #FBD786, #f7797d)"
+};  
 
 export default function GlassSelect({ value, onChange, options, labelRender, showDot=true, }) {
   const [open, setOpen] = useState(false);
@@ -11,19 +22,6 @@ export default function GlassSelect({ value, onChange, options, labelRender, sho
    
   const label = labelRender ? labelRender(value) : value;
   const toggle = () => setOpen((o) => !o);
-
-  export const THEME_SWATCH = {
-    sunset: "linear-gradient(135deg, #ff9966, #ff5e62)",
-    neon: "linear-gradient(135deg, #00ffe0, #0078ff)",
-    dark: "linear-gradient(135deg, #111, #333)",
-    light: "linear-gradient(135deg, #eee, #ccc)",
-    amethyst: "linear-gradient(135deg, #9D50BB, #6E48AA)",
-    pastel: "linear-gradient(135deg, #fbc2eb, #a6c1ee)",
-    iced: "linear-gradient(135deg, #a1c4fd, #c2e9fb)",
-    ocean: "linear-gradient(135deg, #2E3192, #1BFFFF)",
-    forest: "linear-gradient(135deg, #134E5E, #71B280)",
-    sand: "linear-gradient(135deg, #FBD786, #f7797d)"
-  };
 
   // position menu under button
   const placeMenu = () => {
