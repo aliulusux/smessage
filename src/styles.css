@@ -420,8 +420,10 @@ input, select {
   border-radius: 10px;
   background: rgba(255, 255, 255, 0);
   border: 1px solid rgba(255, 255, 255, 0);
-  backdrop-filter: blur(10px);
   outline: none;
+  -webkit-backdrop-filter: blur(12px) saturate(200%) brightness(1.15);
+  gap:12px;
+  padding:15px 17px;
 }
 .glass-range::-webkit-slider-thumb {
   -webkit-appearance: none;
