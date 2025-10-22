@@ -3,12 +3,14 @@ import ChannelList from "../components/ChannelList.jsx"
 import CreateChannelModal from "../components/CreateChannelModal.jsx"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "../lib/supabase"
+import GlassAlert from "../components/GlassAlert";
 
 export default function Join(){
   const nav = useNavigate()
   const [username,setUsername] = useState(localStorage.getItem("username") || "")
   const [open,setOpen] = useState(false)
   const [loading,setLoading] = useState(false)
+  const [alertMessage, setAlertMessage] = useState("");
 
   useEffect(()=>{ 
     if(username.trim()) localStorage.setItem("username", username)
@@ -34,7 +36,7 @@ export default function Join(){
   }
 
   const joinChannel = async (ch)=>{
-    if(!username.trim()){ alert("Please enter a username first."); return }
+    if(!username.trim()){ setAlertMessage("Please enter a username first."); return }
 
     setLoading(true)
     const ok = await registerUser(username.trim())
@@ -51,6 +53,9 @@ export default function Join(){
   }
 
   return (
+    {alertMessage && (
+      <GlassAlert message={alertMessage} onClose={() => setAlertMessage("")} />
+    )}
     <div className="container" style={{maxWidth:920}}>
       <div className="card">
         <h1 style={{marginTop:0, textAlign:"center"}}>Join sMessage</h1>

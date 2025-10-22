@@ -1,180 +1,278 @@
-import { useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { supabase } from "../lib/supabase"
-import SettingsModal from "../components/SettingsModal.jsx"
-import MessageList from "../components/MessageList.jsx"
-import MessageInput from "../components/MessageInput.jsx"
+import React, { useEffect, useState, useRef } from "react";
+import { supabase } from "../supabaseClient";
+import GlassAlert from "../components/GlassAlert";
 
-const ONLINE_WINDOW_MS = 45000
-const ACTIVE_UPDATE_MS = 15000
-const SPAM_COOLDOWN_MS = 2000
-const TYPING_TIMEOUT_MS = 4000
+export default function Chat({ username, channelId, onLogout }) {
+  const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [messageText, setMessageText] = useState("");
+  const [typingUser, setTypingUser] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+  const typingTimeout = useRef(null);
+  const messagesEndRef = useRef(null);
 
-export default function Chat() {
-  const { channelId } = useParams()
-  const nav = useNavigate()
-  const [channel, setChannel] = useState(null)
-  const [messages, setMessages] = useState([])
-  const [users, setUsers] = useState([])
-  const [typingUsers, setTypingUsers] = useState([])
-  const [openSettings, setOpenSettings] = useState(false)
-  const listRef = useRef(null)
-  const username = useMemo(() => localStorage.getItem("username") || "", [])
-
-  useEffect(() => { if (!username) nav("/join") }, [username, nav])
-
-  // ✅ Load channel & messages
+  // Scroll messages to bottom
   useEffect(() => {
-    const load = async () => {
-      const { data: ch } = await supabase.from("channels").select("*").eq("id", channelId).single()
-      if (!ch) return nav("/join")
-      setChannel(ch)
-      const { data: msgs } = await supabase
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Fetch messages
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const { data } = await supabase
         .from("messages")
         .select("*")
         .eq("channel_id", channelId)
-        .order("created_at", { ascending: true })
-      setMessages(msgs || [])
-      setTimeout(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight }), 0)
-    }
-    load()
-  }, [channelId, nav])
+        .order("created_at", { ascending: true });
+      setMessages(data || []);
+    };
+    fetchMessages();
 
-  // ✅ Realtime new messages
-  useEffect(() => {
-    const sub = supabase.channel(`messages-${channelId}`)
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `channel_id=eq.${channelId}` },
-        payload => {
-          setMessages(m => [...m, payload.new])
-          setTimeout(() => listRef.current?.scrollTo({
-            top: listRef.current.scrollHeight,
-            behavior: "smooth"
-          }), 80)
-        })
-      .subscribe()
-    return () => supabase.removeChannel(sub)
-  }, [channelId])
+    const channel = supabase
+      .channel("messages")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "messages", filter: `channel_id=eq.${channelId}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
 
-  // ✅ Typing realtime (unchanged)
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [channelId]);
+
+  // Fetch and listen to users
   useEffect(() => {
-    const typingSub = supabase.channel(`typing-${channelId}`)
-      .on("broadcast", { event: "typing" }, ({ payload }) => {
-        if (payload.username === username) return
-        setTypingUsers(prev => {
-          const exists = prev.find(u => u.username === payload.username)
-          if (exists) return prev
-          return [...prev, { username: payload.username, timeout: Date.now() + TYPING_TIMEOUT_MS }]
-        })
+    const loadUsers = async () => {
+      const { data } = await supabase.from("users").select("*");
+      setUsers(data || []);
+    };
+    loadUsers();
+
+    const channel = supabase
+      .channel("users")
+      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, loadUsers)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Add user on join
+  useEffect(() => {
+    const addUser = async () => {
+      if (!username) return;
+      await supabase.from("users").upsert({ username, last_active: new Date().toISOString() });
+    };
+    addUser();
+  }, [username]);
+
+  // Remove user on exit
+  useEffect(() => {
+    const removeUserOnExit = async () => {
+      if (username) {
+        await supabase.from("users").delete().eq("username", username);
+      }
+    };
+    window.addEventListener("beforeunload", removeUserOnExit);
+    return () => window.removeEventListener("beforeunload", removeUserOnExit);
+  }, [username]);
+
+  // Typing indicator
+  const handleTyping = async () => {
+    await supabase
+      .from("typing")
+      .upsert({ username, channel_id: channelId, is_typing: true });
+
+    clearTimeout(typingTimeout.current);
+    typingTimeout.current = setTimeout(async () => {
+      await supabase
+        .from("typing")
+        .update({ is_typing: false })
+        .eq("username", username);
+    }, 2500);
+  };
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("typing")
+      .on("postgres_changes", { event: "*", schema: "public", table: "typing" }, async () => {
+        const { data } = await supabase.from("typing").select("*").eq("channel_id", channelId);
+        const active = data?.find((t) => t.is_typing && t.username !== username);
+        setTypingUser(active ? active.username : "");
       })
-      .subscribe()
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [channelId, username]);
 
-    const interval = setInterval(() => {
-      setTypingUsers(prev => prev.filter(u => u.timeout > Date.now()))
-    }, 1000)
+  // Send message
+  const sendMessage = async () => {
+    if (!messageText.trim()) return;
+    const { error } = await supabase.from("messages").insert({
+      username,
+      channel_id: channelId,
+      content: messageText.trim(),
+    });
+    if (error) setAlertMessage("Failed to send message.");
+    setMessageText("");
+  };
 
-    return () => {
-      clearInterval(interval)
-      supabase.removeChannel(typingSub)
-    }
-  }, [username, channelId])
-
-  // ✅ Fix presence sync + new tab detection
-  useEffect(() => {
-    if (!username) return
-
-    const refreshUsers = async () => {
-      const { data } = await supabase.from("users").select("username,last_active")
-      setUsers(data || [])
-    }
-
-    const markActive = async () => {
-      const now = new Date().toISOString()
-      const { error } = await supabase
-        .from("users")
-        .upsert({ username, last_active: now })
-      if (error) console.error("User update failed:", error)
-    }
-
-    refreshUsers()
-    markActive()
-
-    const interval = setInterval(markActive, ACTIVE_UPDATE_MS)
-
-    const sub = supabase.channel("users-sync")
-      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, refreshUsers)
-      .subscribe()
-
-    const cleanup = async () => {
-      await supabase.from("users").delete().eq("username", username)
-    }
-
-    window.addEventListener("beforeunload", cleanup)
-    return () => {
-      clearInterval(interval)
-      supabase.removeChannel(sub)
-      window.removeEventListener("beforeunload", cleanup)
-      cleanup()
-    }
-  }, [username])
-
-  const lastSent = useRef(0)
-  const sendMessage = async (content) => {
-    const now = Date.now()
-    if (now - lastSent.current < SPAM_COOLDOWN_MS) return alert("Slow down 😊")
-    lastSent.current = now
-    if (!content.trim()) return
-    const { error } = await supabase.from("messages").insert({ channel_id: channelId, username, content })
-    if (error) alert(error.message)
-  }
-
-  const sendTyping = async () => {
-    await supabase.channel(`typing-${channelId}`).send({
-      type: "broadcast",
-      event: "typing",
-      payload: { username }
-    })
-  }
-
-  const logout = async () => {
-    await supabase.from("users").delete().eq("username", username)
-    localStorage.removeItem("username")
-    nav("/join")
-  }
-
-  const isOnline = (u) => Date.now() - new Date(u.last_active).getTime() < ONLINE_WINDOW_MS
-  const lastSeen = (u) => {
-    const diff = Date.now() - new Date(u.last_active).getTime()
-    const min = Math.floor(diff / 60000)
-    if (min < 1) return "just now"
-    if (min < 60) return `${min} min ago`
-    return `${Math.floor(min / 60)} hr ago`
-  }
-
-  const onlineCount = users.filter(isOnline).length
-  const sortedUsers = [...users].sort((a, b) => (isOnline(b) - isOnline(a)) || a.username.localeCompare(b.username))
-
+  // UI return
   return (
-    <div className="container" style={{ maxWidth: 1100 }}>
-      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <h1 className="glow" style={{ fontSize: 28, fontWeight: 800 }}>sMessage</h1>
-        <div className="row" style={{ gap: 10 }}>
-          <button className="btn" onClick={() => setOpenSettings(true)}>Settings</button>
-          <button className="btn" onClick={logout}>Logout</button>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        background: "var(--theme-bg)",
+        padding: 20,
+        transition: "0.3s ease",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 10,
+        }}
+      >
+        <h1
+          style={{
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 24,
+            textShadow: "0 0 10px rgba(255,255,255,0.3)",
+          }}
+        >
+          sMessage
+        </h1>
+        <div>
+          <button
+            onClick={() => setAlertMessage("Settings coming soon")}
+            style={{
+              marginRight: 10,
+              border: "none",
+              borderRadius: 10,
+              background: "linear-gradient(135deg,#667eea,#764ba2)",
+              color: "#fff",
+              padding: "8px 16px",
+              fontSize: 15,
+              cursor: "pointer",
+              transition: "0.3s",
+            }}
+          >
+            Settings
+          </button>
+          <button
+            onClick={onLogout}
+            style={{
+              border: "none",
+              borderRadius: 10,
+              background: "linear-gradient(135deg,#667eea,#764ba2)",
+              color: "#fff",
+              padding: "8px 16px",
+              fontSize: 15,
+              cursor: "pointer",
+              transition: "0.3s",
+            }}
+          >
+            Logout
+          </button>
         </div>
       </div>
 
-      <div className="chat-shell">
-        <div className="chat-box">
-          <div className="glow" style={{ fontWeight: 700, fontSize: 20, marginBottom: 6 }}>
-            {channel?.name || "Channel"}
-          </div>
+      {/* Chat container */}
+      <div style={{ display: "flex", flex: 1, gap: 15 }}>
+        {/* Messages */}
+        <div
+          style={{
+            flex: 3,
+            display: "flex",
+            flexDirection: "column",
+            background: "rgba(255,255,255,0.08)",
+            borderRadius: 14,
+            padding: 15,
+            overflowY: "auto",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+          }}
+        >
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              style={{
+                alignSelf: msg.username === username ? "flex-end" : "flex-start",
+                background:
+                  msg.username === username
+                    ? "linear-gradient(135deg,#764ba2,#667eea)"
+                    : "rgba(255,255,255,0.15)",
+                color: "#fff",
+                padding: "10px 16px",
+                borderRadius: 14,
+                marginBottom: 8,
+                maxWidth: "70%",
+                boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+              }}
+            >
+              <b>{msg.username}</b>
+              <div>{msg.content}</div>
+            </div>
+          ))}
+          {typingUser && (
+            <div
+              style={{
+                fontStyle: "italic",
+                fontSize: 14,
+                color: "rgba(255,255,255,0.8)",
+                marginTop: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              {typingUser} is typing{" "}
+              <div className="typing-dots">
+                <span>.</span><span>.</span><span>.</span>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
 
-          <div className="msgs" ref={listRef}>
-            <MessageList messages={messages} username={username} />
-          </div>
+        {/* Users */}
+        <div
+          style={{
+            flex: 1,
+            background: "rgba(255,255,255,0.08)",
+            borderRadius: 14,
+            padding: 15,
+            color: "#fff",
+          }}
+        >
+          <h3>Users ({users.filter(u => u.online).length} online)</h3>
+          {users.map((u, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", marginTop: 6 }}>
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: u.online ? "#3f0" : "#888",
+                  marginRight: 8,
+                }}
+              ></div>
+              {u.username}
+            </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Typing indicator with gradient dots */}
+      {/* Typing indicator with gradient dots */}
           {typingUsers.length > 0 && (
             <div style={{
               display: "flex", alignItems: "center", gap: 6,
@@ -198,32 +296,46 @@ export default function Chat() {
             </div>
           )}
 
-          <MessageInput onSend={sendMessage} onTyping={sendTyping} />
-        </div>
-
-        <div className="users">
-          <div style={{ fontWeight: 700, marginBottom: 10 }}>
-            Users <span style={{ opacity: 0.8 }}>({onlineCount} online)</span>
-          </div>
-          {sortedUsers.map(u => {
-            const online = isOnline(u)
-            return (
-              <div key={u.username} style={{ marginBottom: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{
-                    width: 10, height: 10, borderRadius: "50%",
-                    background: online ? "#32cd32" : "#888"
-                  }}></div>
-                  <span>{u.username}</span>
-                </div>
-                {!online && <div style={{ marginLeft: 18, fontSize: 12, opacity: 0.7 }}>last seen {lastSeen(u)}</div>}
-              </div>
-            )
-          })}
-        </div>
+      {/* Message input */}
+      <div style={{ marginTop: 10, display: "flex" }}>
+        <input
+          value={messageText}
+          onChange={(e) => {
+            setMessageText(e.target.value);
+            handleTyping();
+          }}
+          placeholder="Type your message..."
+          style={{
+            flex: 1,
+            padding: "12px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(255,255,255,0.3)",
+            background: "rgba(255,255,255,0.1)",
+            color: "#fff",
+            outline: "none",
+            fontSize: 15,
+          }}
+        />
+        <button
+          onClick={sendMessage}
+          style={{
+            marginLeft: 8,
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: 10,
+            background: "linear-gradient(135deg,#667eea,#764ba2)",
+            color: "#fff",
+            fontSize: 15,
+            cursor: "pointer",
+          }}
+        >
+          Send
+        </button>
       </div>
 
-      <SettingsModal open={openSettings} onClose={() => setOpenSettings(false)} />
+      {alertMessage && (
+        <GlassAlert message={alertMessage} onClose={() => setAlertMessage("")} />
+      )}
     </div>
-  )
+  );
 }

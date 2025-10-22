@@ -23,6 +23,16 @@
   80%,100% { opacity: 0.3; transform: translateY(0); filter: hue-rotate(80deg); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 
 *{box-sizing:border-box}
 html,body,#root{height:100%}
