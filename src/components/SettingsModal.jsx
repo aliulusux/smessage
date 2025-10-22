@@ -6,9 +6,10 @@ export default function SettingsModal({ open, onClose }) {
   const set = settings.set;
 
   if (!open) return null;
+
   return (
-    <div className="modal-backdrop glass">
-      <div className="modal glass-modal settings-modal">
+    <div className="modal-overlay">
+      <div className="settings-modal glass-modal">
         <div className="macos-header">
           <div className="macos-dots">
             <button className="dot red" onClick={onClose}></button>

@@ -111,34 +111,49 @@ input, select {
 .user-row .dot { width:8px; height:8px; border-radius:999px; background: #22c55e; display:inline-block; }
 .user-row .typing { margin-left:auto; font-size:.8em; color: var(--muted); }
 
-/* ===== Fixed Glass Settings Modal with macOS Red Dot ===== */
-.modal-backdrop.glass {
-  backdrop-filter: blur(18px) brightness(0.7);
-  background: rgba(10, 10, 25, 0.4);
-  z-index: 50;
-}
-
-.glass-modal.settings-modal {
-  background: rgba(30, 35, 60, 0.35);
-  backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
-  border-radius: 16px;
-  width: min(640px, 92vw);
-  padding-bottom: 20px;
-  color: var(--text);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  overflow: hidden;
-}
-
-.macos-header {
+/* ===== True Centered Glass Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(16px) brightness(0.7);
+  background: rgba(10, 10, 25, 0.45);
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.settings-modal {
+  width: min(640px, 92vw);
+  border-radius: 18px;
+  background: rgba(30, 35, 60, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px) saturate(160%);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(0);
+  animation: popIn 0.3s cubic-bezier(.2,.9,.3,1.2);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* macOS header + red dot */
+.macos-header {
   position: relative;
-  padding: 16px 20px 8px;
+  padding: 16px 20px 10px;
+  text-align: center;
   font-weight: 700;
   font-size: 1.2rem;
 }
@@ -164,10 +179,11 @@ input, select {
 .macos-dots .dot:hover { transform: scale(1.2); }
 .macos-dots .red { background: #ff5f57; }
 
+/* settings body */
 .settings-body {
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 18px;
+  padding: 22px;
 }
 
 .settings-body .row {
