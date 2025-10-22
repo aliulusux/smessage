@@ -10,6 +10,7 @@ export default function Chat({ username, channelId, onLogout }) {
   const [messageText, setMessageText] = useState("");
   const [typingUser, setTypingUser] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
+  const [openSettings, setOpenSettings] = useState(false)
   const typingTimeout = useRef(null);
   const messagesEndRef = useRef(null);
 
