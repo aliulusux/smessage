@@ -225,6 +225,26 @@ input, select {
   transition: transform 0.2s ease;
 }
 
+.glass-select-btn:active {
+  animation: clickPulse 0.4s ease;
+}
+
+@keyframes clickPulse {
+  0% {
+    background: rgba(255,255,255,0.08);
+    transform: scale(1);
+  }
+  50% {
+    background: rgba(255,255,255,0.2);
+    transform: scale(0.98);
+  }
+  100% {
+    background: rgba(255,255,255,0.08);
+    transform: scale(1);
+  }
+}
+
+
 .glass-select-btn:active .arrow {
   transform: rotate(180deg);
 }
@@ -240,6 +260,19 @@ input, select {
   opacity: .8; 
 }
 
+/* === Blur Pulse Effect === */
+@keyframes blurPulse {
+  0% {
+    backdrop-filter: blur(14px) saturate(130%) brightness(0.95);
+  }
+  40% {
+    backdrop-filter: blur(26px) saturate(180%) brightness(1.25);
+  }
+  100% {
+    backdrop-filter: blur(22px) saturate(160%) brightness(1.15);
+  }
+}
+
 /* === Dropdown Menu === */
 .glass-select-menu {
   z-index: 9999;
@@ -253,7 +286,9 @@ input, select {
   margin: 0;
   overflow-y: auto;
   max-height: 260px;
-  animation: fadeSlideIn 0.25s ease forwards;
+  animation:
+    fadeSlideIn 0.25s ease forwards,
+    blurPulse 0.5s ease forwards; /* <— added pulse */
 }
 
 /* === Menu Items === */
