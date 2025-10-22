@@ -18,31 +18,49 @@ export default function Chat({ username, channelId, onLogout }) {
   }, [messages]);
 
   // Fetch messages
-  const fetchMessages = async () => {
-    if (!channelId) {
-      console.warn("No channel ID defined — skipping message fetch.");
-      return;
-    }
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("channel_id", channelId)
-      .order("created_at", { ascending: true });
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!channelId) {
+        return (
+          <div
+            style={{
+              color: "#fff",
+              textAlign: "center",
+              marginTop: "40vh",
+              fontSize: 18,
+              opacity: 0.8,
+            }}
+          >
+            ⚠️ No channel selected. Please go back and join a channel.
+          </div>
+        );
+      }
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("channel_id", channelId)
+        .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching messages:", error.message);
-      return;
-    }
+      if (error) {
+        console.error("Error fetching messages:", error.message);
+        return;
+      }
 
-    setMessages(data || []);
-  };
-  fetchMessages();
+      setMessages(data || []);
+    };
+
+    fetchMessages();
 
     const channel = supabase
       .channel("messages")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "messages", filter: `channel_id=eq.${channelId}` },
+        {
+          event: "*",
+          schema: "public",
+          table: "messages",
+          filter: `channel_id=eq.${channelId}`,
+        },
         (payload) => {
           setMessages((prev) => [...prev, payload.new]);
         }
@@ -53,6 +71,7 @@ export default function Chat({ username, channelId, onLogout }) {
       supabase.removeChannel(channel);
     };
   }, [channelId]);
+
 
   // Fetch and listen to users
   useEffect(() => {
