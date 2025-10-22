@@ -198,55 +198,77 @@ input, select {
   opacity: .95;
 }
 
-/* ===== Glass SELECT (button) ===== */
+/* === Dropdown Button === */
 .glass-select-btn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);     /* transparent */
-  backdrop-filter: blur(10px);            /* blur like iOS/macOS */
-  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px) saturate(150%);
+  color: #fff;
+  font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   cursor: pointer;
-  outline: none;
+  transition: all 0.2s ease;
 }
+
 .glass-select-btn:hover {
-  background: rgba(255,255,255,.10);
+  background: rgba(255,255,255,0.14);
   border-color: rgba(255,255,255,.22);
 }
-.glass-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.glass-select-caret { opacity: .8; }
 
-/* ===== Glass SELECT menu (the open dropdown) ===== */
+.arrow {
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.glass-select-btn:active .arrow {
+  transform: rotate(180deg);
+}
+
+.glass-select-label { 
+  overflow: hidden; 
+  text-overflow: 
+  ellipsis; 
+  white-space: nowrap; 
+}
+
+.glass-select-caret { 
+  opacity: .8; 
+}
+
+/* === Dropdown Menu === */
 .glass-select-menu {
   z-index: 9999;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(22px) saturate(160%);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px) saturate(160%) brightness(1.15);
+  box-shadow: 0 16px 50px rgba(0,0,0,0.55);
   list-style: none;
-  padding: 8px;
+  padding: 6px;
   margin: 0;
   overflow-y: auto;
-  max-height: 240px;
+  max-height: 260px;
+  animation: fadeSlideIn 0.25s ease forwards;
 }
+
+/* === Menu Items === */
 .glass-select-menu li {
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 8px;
-  transition: background 0.15s ease;
+  color: rgba(255,255,255,0.9);
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
+
 .glass-select-menu li:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.18);
+  transform: scale(1.02);
 }
-
-
 
 .glass-select-item {
   padding: 10px 12px;
@@ -262,6 +284,18 @@ input, select {
 .glass-select-menu::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,.25);
   border-radius: 6px;
+}
+
+/* === Fade + Slide Animation === */
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ===== Glass RANGE (track & thumb) ===== */
