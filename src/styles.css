@@ -375,25 +375,14 @@ input, select {
   }
 }
 
-/* === Menu Items === */
-.glass-select-menu li {
-  padding: 9px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.034);
-  color: rgba(255,255,255,0.9);
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
+
 
 .glass-select-menu li:hover {
   background: rgba(255,255,255,0.18);
   transform: scale(1.02);
 }
 
-/* Items */
-.glass-select-item{-webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.15);backdrop-filter: blur(24px) saturate(180%) brightness(1.15);display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;color:var(--text);cursor:pointer;}
-.glass-select-item:hover{background:rgba(255,255,255,.14);backdrop-filter: blur(30px) saturate(200%);}
-.glass-select-item.active{background:rgba(255,255,255,.18);}
+
 
 /* thin nice scrollbar for the glass menu */
 .glass-select-menu::-webkit-scrollbar { width: 8px; }
