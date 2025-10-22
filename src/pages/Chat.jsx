@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase"
 import GlassAlert from "../components/GlassAlert";
-import SettingsModal from "../components/SettingsModal"
 
 
 export default function Chat({ username, channelId, onLogout }) {
@@ -10,7 +9,6 @@ export default function Chat({ username, channelId, onLogout }) {
   const [messageText, setMessageText] = useState("");
   const [typingUser, setTypingUser] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
-  const [openSettings, setOpenSettings] = useState(false)
   const typingTimeout = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -184,19 +182,37 @@ export default function Chat({ username, channelId, onLogout }) {
           sMessage
         </h1>
         <div>
-          <button 
+          <button
+            onClick={() => setAlertMessage("Settings coming soon")}
             style={{
-              width: 36, height: 36, borderRadius: "50%",
+              marginRight: 10,
               border: "none",
+              borderRadius: 10,
               background: "linear-gradient(135deg,#667eea,#764ba2)",
-              color: "white", fontSize: 20, cursor: "pointer",
-              display: "flex", justifyContent: "center", alignItems: "center",
-              boxShadow: "0 0 10px rgba(118,75,162,0.6)",
-              transition: "transform 0.2s ease, box-shadow 0.2s ease"
-            }}>
-            <SettingsModal open={openSettings} onClose={() => setOpenSettings(false)} />
+              color: "#fff",
+              padding: "8px 16px",
+              fontSize: 15,
+              cursor: "pointer",
+              transition: "0.3s",
+            }}
+          >
+            Settings
           </button>
-          
+          <button
+            onClick={onLogout}
+            style={{
+              border: "none",
+              borderRadius: 10,
+              background: "linear-gradient(135deg,#667eea,#764ba2)",
+              color: "#fff",
+              padding: "8px 16px",
+              fontSize: 15,
+              cursor: "pointer",
+              transition: "0.3s",
+            }}
+          >
+            Logout
+          </button>
         </div>
       </div>
 
