@@ -344,7 +344,7 @@ input, select {
   -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.15);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
   transition: backdrop-filter 0.3s ease, background 0.3s ease;
-  animation:glassyFadeIn .25s ease forwards, blurPulse .5s ease forwards;
+  animation:fadeSlideIn .25s ease forwards, blurPulse .5s ease forwards;
 }
 
 /* Add a slight glow around the list when opened */
