@@ -15,6 +15,18 @@ export default function Chat(){
   const [openSettings,setOpenSettings] = useState(false)
   const listRef = useRef(null)
 
+  // ✅ Define username here — before any useEffect
+  const username = useMemo(
+    () => localStorage.getItem("username") || `guest-${Math.floor(Math.random() * 9999)}`,
+    []
+  )
+
+  useEffect(() => {
+    if (!username) {
+      nav("/join")
+    }
+  }, [username, nav])
+
   //user 
   useEffect(()=>{
     const updateActive = async ()=>{
@@ -66,16 +78,37 @@ useEffect(() => {
       .eq("username", username);
   };
 
-  // Update last_active every 30 seconds
-  updateSelfActive();
-  const interval = setInterval(updateSelfActive, 30000);
+  // Presence tracking + realtime user list (last_active system)
+  useEffect(() => {
+    const updateSelfActive = async () => {
+      await supabase
+        .from("users")
+        .update({ last_active: new Date().toISOString() })
+        .eq("username", username)
+    }
 
-  // Load all users and update online status
-  const loadUsers = async () => {
-    const { data } = await supabase.from("users").select("username, last_active");
-    if (data) setUsers(data);
-  };
-  loadUsers();
+    // update every 30s
+    updateSelfActive()
+    const interval = setInterval(updateSelfActive, 30000)
+
+    // load all users
+    const loadUsers = async () => {
+      const { data } = await supabase.from("users").select("username, last_active")
+      if (data) setUsers(data)
+    }
+    loadUsers()
+
+    // listen for DB updates
+    const sub = supabase
+      .channel("users-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, loadUsers)
+      .subscribe()
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(sub)
+    }
+  }, [username])
 
   // Realtime sync
   const sub = supabase
