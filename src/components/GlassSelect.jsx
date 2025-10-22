@@ -1,78 +1,55 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 
-export default function GlassSelect({ value, onChange, options, labelRender }) {
-  const [open, setOpen] = React.useState(false);
-  const btnRef = React.useRef(null);
-  const menuRef = React.useRef(null);
+export default function GlassSelect({ value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState({});
+  const btnRef = useRef(null);
 
-  // close when clicking outside
-  React.useEffect(() => {
-    function onDoc(e) {
-      if (!open) return;
-      if (!btnRef.current?.contains(e.target) && !menuRef.current?.contains(e.target)) {
-        setOpen(false);
-      }
+  const toggle = () => setOpen((o) => !o);
+
+  // Position dropdown relative to button
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setMenuStyle({
+        position: "absolute",
+        top: `${rect.bottom + window.scrollY + 6}px`,
+        left: `${rect.left + window.scrollX}px`,
+        width: `${rect.width}px`,
+      });
     }
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
-
-  // place menu under button
-  const [pos, setPos] = React.useState({ top: 0, left: 0, width: 0 });
-  const place = () => {
-    const r = btnRef.current?.getBoundingClientRect();
-    if (r) setPos({ top: r.bottom + window.scrollY + 8, left: r.left + window.scrollX, width: r.width });
-  };
-  React.useEffect(() => { place(); }, [open]);
-  React.useEffect(() => {
-    const onRes = () => open && place();
-    window.addEventListener("resize", onRes);
-    window.addEventListener("scroll", onRes, true);
-    return () => {
-      window.removeEventListener("resize", onRes);
-      window.removeEventListener("scroll", onRes, true);
-    };
-  }, [open]);
-
-  const currentLabel = labelRender ? labelRender(value) : value;
 
   return (
     <>
       <button
         ref={btnRef}
+        onClick={toggle}
         className="glass-select-btn"
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
       >
-        <span className="glass-select-label">{currentLabel}</span>
-        <span className="glass-select-caret">▾</span>
+        {value}
+        <span className="arrow">▾</span>
       </button>
 
-      {open && (
-        <ul
-          ref={menuRef}
-          className="glass-select-menu"
-          style={{ top: pos.top, left: pos.left, width: pos.width }}
-          role="listbox"
-        >
-          {options.map((opt) => {
-            const label = labelRender ? labelRender(opt) : opt;
-            return (
+      {open &&
+        createPortal(
+          <ul className="glass-select-menu" style={menuStyle}>
+            {options.map((opt) => (
               <li
-                key={String(opt)}
-                className={`glass-select-item ${opt === value ? "active" : ""}`}
-                role="option"
-                aria-selected={opt === value}
-                onClick={() => { onChange(opt); setOpen(false); }}
+                key={opt}
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
               >
-                {label}
+                {opt}
               </li>
-            );
-          })}
-        </ul>
-      )}
+            ))}
+          </ul>,
+          document.body
+        )}
     </>
   );
 }

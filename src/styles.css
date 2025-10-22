@@ -224,19 +224,28 @@ input, select {
 
 /* ===== Glass SELECT menu (the open dropdown) ===== */
 .glass-select-menu {
-  position: absolute;
-  z-index: 2000; /* <--- Add this line */
-  max-height: 260px;
-  overflow: auto;
-  padding: 6px;
-  margin: 0;
-  list-style: none;
+  z-index: 9999;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(18px) saturate(160%);
-  box-shadow: 0 14px 40px rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+  overflow-y: auto;
+  max-height: 240px;
 }
+.glass-select-menu li {
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+.glass-select-menu li:hover {
+  background: rgba(255,255,255,0.15);
+}
+
 
 
 .glass-select-item {
