@@ -1,83 +1,88 @@
-import { useEffect, useState } from "react"
-import ChannelList from "../components/ChannelList.jsx"
-import CreateChannelModal from "../components/CreateChannelModal.jsx"
-import { useNavigate } from "react-router-dom"
-import { supabase } from "../lib/supabase"
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import GlassAlert from "../components/GlassAlert";
 
-export default function Join(){
-  const nav = useNavigate()
-  const [username,setUsername] = useState(localStorage.getItem("username") || "")
-  const [open,setOpen] = useState(false)
-  const [loading,setLoading] = useState(false)
+export default function Join() {
+  const [username, setUsername] = useState("");
+  const [channels, setChannels] = useState([]);
   const [alertMessage, setAlertMessage] = useState("");
+  const navigate = useNavigate();
 
-  useEffect(()=>{ 
-    if(username.trim()) localStorage.setItem("username", username)
-  },[username])
+  // 🔹 Load channels
+  useEffect(() => {
+    const fetchChannels = async () => {
+      const { data, error } = await supabase.from("channels").select("*");
+      if (error) console.error(error);
+      else setChannels(data || []);
+    };
+    fetchChannels();
+  }, []);
 
-  const registerUser = async (name)=>{
-    // Check if username exists
-    const { data: exists } = await supabase.from("users")
-      .select("id").eq("username", name).maybeSingle()
-    if(exists){
-      alert("This username is already taken. Please choose another one.")
-      return false
+  // 🔹 Join channel
+  const joinChannel = async (id) => {
+    if (!username.trim()) {
+      setAlertMessage("Please enter a username first!");
+      return;
     }
 
-    // Insert new user
-    const { error } = await supabase.from("users")
-      .insert({ username: name })
-    if(error){
-      alert("Error creating user: " + error.message)
-      return false
-    }
-    return true
-  }
+    const { data: channel } = await supabase
+      .from("channels")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
 
-  const joinChannel = async (ch)=>{
-    if(!username.trim()){ setAlertMessage("Please enter a username first."); return }
-
-    setLoading(true)
-    const ok = await registerUser(username.trim())
-    if(!ok){ setLoading(false); return }
-
-    if(ch.is_private){
-      const pass = prompt("This channel is private. Enter password:")
-      if(pass === null){ setLoading(false); return }
-      if(pass !== ch.password){ alert("Wrong password"); setLoading(false); return }
+    if (!channel) {
+      setAlertMessage("❌ This channel no longer exists!");
+      return;
     }
 
-    setLoading(false)
-    nav(`/chat/${ch.id}`)
-  }
+    localStorage.setItem("username", username);
+
+    // Mark user online
+    await supabase
+      .from("users")
+      .upsert({ username, is_online: true, last_active: new Date().toISOString() });
+
+    navigate(`/chat/${id}`);
+  };
+
+  // 🔹 Create channel
+  const createChannel = async () => {
+    if (!username.trim()) {
+      setAlertMessage("Please enter a username first!");
+      return;
+    }
+
+    const channelName = prompt("Enter a new channel name:");
+    if (!channelName) return;
+
+    const { data, error } = await supabase
+      .from("channels")
+      .insert({ name: channelName })
+      .select();
+
+    if (error) {
+      console.error(error);
+      setAlertMessage("Error creating channel.");
+      return;
+    }
+
+    localStorage.setItem("username", username);
+    navigate(`/chat/${data[0].id}`);
+  };
 
   return (
-    <div className="container" style={{maxWidth:920}}>
+    <div className="join-page">
       {alertMessage && (
         <GlassAlert message={alertMessage} onClose={() => setAlertMessage("")} />
       )}
-      <div className="card">
-        <h1 style={{marginTop:0, textAlign:"center"}}>Join sMessage</h1>
-        <p style={{textAlign:"center", opacity:.85}}>Enter your username and select a channel to start chatting</p>
 
-        <div className="col" style={{marginTop:18}}>
-          <label>Username</label>
-          <input className="input" placeholder="Enter your username"
-                 value={username} onChange={e=>setUsername(e.target.value)} />
-        </div>
+      <div className="join-box glass">
+        <h1>sMessage</h1>
 
-        <div className="row" style={{justifyContent:"space-between", marginTop:14}}>
-          <div style={{opacity:.9}}>Available Channels</div>
-          <button className="btn" onClick={()=>setOpen(true)}>Create Channel</button>
-        </div>
-
-        <div style={{marginTop:12}}>
-          <ChannelList onJoin={(c)=>!loading && joinChannel(c)}/>
-        </div>
-      </div>
-
-      <CreateChannelModal open={open} onClose={()=>setOpen(false)}/>
-    </div>
-  )
-}
+        <input
+          placeholder="Enter your username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />

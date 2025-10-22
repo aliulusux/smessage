@@ -1,40 +1,47 @@
-import React, { useEffect, useState, useRef } from "react";
-import { supabase } from "../lib/supabase"
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 import GlassAlert from "../components/GlassAlert";
 
-
-export default function Chat({ username, channelId, onLogout }) {
+export default function Chat() {
+  const { channelId } = useParams();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
-  const [messageText, setMessageText] = useState("");
-  const [typingUser, setTypingUser] = useState("");
+  const [text, setText] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
-  const typingTimeout = useRef(null);
+  const [typingUsers, setTypingUsers] = useState([]);
   const messagesEndRef = useRef(null);
 
-  // Scroll messages to bottom
+  // 🧹 Scroll messages to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Fetch messages
+  // ✅ Validate channel before fetching
+  const validateChannel = async () => {
+    const { data, error } = await supabase
+      .from("channels")
+      .select("id")
+      .eq("id", channelId)
+      .maybeSingle();
+
+    if (error || !data) {
+      setAlertMessage("⚠️ Channel not found. Redirecting...");
+      setTimeout(() => navigate("/join"), 1500);
+      return false;
+    }
+    return true;
+  };
+
+  // 📥 Fetch messages + realtime subscription
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!channelId) {
-        return (
-          <div
-            style={{
-              color: "#fff",
-              textAlign: "center",
-              marginTop: "40vh",
-              fontSize: 18,
-              opacity: 0.8,
-            }}
-          >
-            ⚠️ No channel selected. Please go back and join a channel.
-          </div>
-        );
-      }
+      if (!channelId) return;
+
+      const valid = await validateChannel();
+      if (!valid) return;
+
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -61,9 +68,7 @@ export default function Chat({ username, channelId, onLogout }) {
           table: "messages",
           filter: `channel_id=eq.${channelId}`,
         },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
-        }
+        (payload) => setMessages((prev) => [...prev, payload.new])
       )
       .subscribe();
 
@@ -72,299 +77,132 @@ export default function Chat({ username, channelId, onLogout }) {
     };
   }, [channelId]);
 
-
-  // Fetch and listen to users
+  // 👥 Fetch and sync users in real time
   useEffect(() => {
     const loadUsers = async () => {
       const { data } = await supabase.from("users").select("*");
       setUsers(data || []);
     };
+
     loadUsers();
 
-    const channel = supabase
+    const userChannel = supabase
       .channel("users")
-      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, loadUsers)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "users" },
+        () => loadUsers()
+      )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(userChannel);
     };
   }, []);
 
-  // Add user on join
-  useEffect(() => {
-    const addUser = async () => {
-      if (!username) return;
-      await supabase.from("users").upsert({ username, last_active: new Date().toISOString() });
-    };
-    addUser();
-  }, [username]);
+  // 💬 Send message
+  const sendMessage = async () => {
+    const username = localStorage.getItem("username");
+    if (!text.trim() || !username || !channelId) return;
 
-  // Remove user on exit
-  useEffect(() => {
-    const removeUserOnExit = async () => {
-      if (username) {
-        await supabase.from("users").delete().eq("username", username);
-      }
-    };
-    window.addEventListener("beforeunload", removeUserOnExit);
-    return () => window.removeEventListener("beforeunload", removeUserOnExit);
-  }, [username]);
+    const { error } = await supabase.from("messages").insert([
+      {
+        sender: username,
+        text,
+        channel_id: channelId,
+      },
+    ]);
 
-  // Typing indicator
-  const handleTyping = async () => {
-    await supabase
-      .from("typing")
-      .upsert({ username, channel_id: channelId, is_typing: true });
-
-    clearTimeout(typingTimeout.current);
-    typingTimeout.current = setTimeout(async () => {
-      await supabase
-        .from("typing")
-        .update({ is_typing: false })
-        .eq("username", username);
-    }, 2500);
+    if (error) console.error("Error sending message:", error);
+    setText("");
   };
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("typing")
-      .on("postgres_changes", { event: "*", schema: "public", table: "typing" }, async () => {
-        const { data } = await supabase.from("typing").select("*").eq("channel_id", channelId);
-        const active = data?.find((t) => t.is_typing && t.username !== username);
-        setTypingUser(active ? active.username : "");
-      })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [channelId, username]);
+  // ⌨️ Handle typing
+  const sendTyping = async () => {
+    const username = localStorage.getItem("username");
+    if (!username || !channelId) return;
 
-  // Send message
-  const sendMessage = async () => {
-    if (!messageText.trim()) return;
-    const { error } = await supabase.from("messages").insert({
+    await supabase.from("typing").upsert({
       username,
       channel_id: channelId,
-      content: messageText.trim(),
+      last_typed: new Date().toISOString(),
     });
-    if (error) setAlertMessage("Failed to send message.");
-    setMessageText("");
   };
 
-  // UI return
+  // ✉️ Handle Enter key
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") sendMessage();
+  };
+
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        background: "var(--theme-bg)",
-        padding: 20,
-        transition: "0.3s ease",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 10,
-        }}
-      >
-        <h1
-          style={{
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 24,
-            textShadow: "0 0 10px rgba(255,255,255,0.3)",
-          }}
-        >
-          sMessage
-        </h1>
-        <div>
-          <button
-            onClick={() => setAlertMessage("Settings coming soon")}
-            style={{
-              marginRight: 10,
-              border: "none",
-              borderRadius: 10,
-              background: "linear-gradient(135deg,#667eea,#764ba2)",
-              color: "#fff",
-              padding: "8px 16px",
-              fontSize: 15,
-              cursor: "pointer",
-              transition: "0.3s",
-            }}
-          >
-            Settings
-          </button>
-          <button
-            onClick={onLogout}
-            style={{
-              border: "none",
-              borderRadius: 10,
-              background: "linear-gradient(135deg,#667eea,#764ba2)",
-              color: "#fff",
-              padding: "8px 16px",
-              fontSize: 15,
-              cursor: "pointer",
-              transition: "0.3s",
-            }}
-          >
+    <div className="chat-page">
+      {alertMessage && (
+        <GlassAlert message={alertMessage} onClose={() => setAlertMessage("")} />
+      )}
+
+      <div className="chat-header">
+        <h2>sMessage</h2>
+        <div className="chat-actions">
+          <button className="btn">Settings</button>
+          <button className="btn" onClick={() => navigate("/join")}>
             Logout
           </button>
         </div>
       </div>
 
-      {/* Chat container */}
-      <div style={{ display: "flex", flex: 1, gap: 15 }}>
-        {/* Messages */}
-        <div
-          style={{
-            flex: 3,
-            display: "flex",
-            flexDirection: "column",
-            background: "rgba(255,255,255,0.08)",
-            borderRadius: 14,
-            padding: 15,
-            overflowY: "auto",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-          }}
-        >
-          {messages.map((msg, i) => (
+      <div className="chat-body">
+        <div className="chat-messages">
+          {messages.map((msg) => (
             <div
-              key={i}
-              style={{
-                alignSelf: msg.username === username ? "flex-end" : "flex-start",
-                background:
-                  msg.username === username
-                    ? "linear-gradient(135deg,#764ba2,#667eea)"
-                    : "rgba(255,255,255,0.15)",
-                color: "#fff",
-                padding: "10px 16px",
-                borderRadius: 14,
-                marginBottom: 8,
-                maxWidth: "70%",
-                boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-              }}
+              key={msg.id}
+              className={`message-bubble ${
+                msg.sender === localStorage.getItem("username")
+                  ? "sent"
+                  : "received"
+              }`}
             >
-              <b>{msg.username}</b>
-              <div>{msg.content}</div>
+              <span className="message-sender">{msg.sender}</span>
+              <p>{msg.text}</p>
+              <small>
+                {new Date(msg.created_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </small>
             </div>
           ))}
-          {typingUser && (
-            <div
-              style={{
-                fontStyle: "italic",
-                fontSize: 14,
-                color: "rgba(255,255,255,0.8)",
-                marginTop: 10,
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-              }}
-            >
-              {typingUser} is typing{" "}
-              <div className="typing-dots">
-                <span>.</span><span>.</span><span>.</span>
-              </div>
-            </div>
-          )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Users */}
-        <div
-          style={{
-            flex: 1,
-            background: "rgba(255,255,255,0.08)",
-            borderRadius: 14,
-            padding: 15,
-            color: "#fff",
-          }}
-        >
-          <h3>Users ({users.filter(u => u.online).length} online)</h3>
-          {users.map((u, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", marginTop: 6 }}>
-              <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: u.online ? "#3f0" : "#888",
-                  marginRight: 8,
-                }}
-              ></div>
-              {u.username}
-            </div>
-          ))}
+        <div className="user-list">
+          <h3>
+            Users ({users.filter((u) => u.is_online).length} online)
+          </h3>
+          <ul>
+            {users.map((u) => (
+              <li key={u.id}>
+                <span
+                  className={`status-dot ${
+                    u.is_online ? "online" : "offline"
+                  }`}
+                ></span>
+                {u.username}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      {/* Typing indicator with gradient dots */}
-          {typingUser.length > 0 && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 6,
-              margin: "6px 0", paddingLeft: 10
-            }}>
-              <div style={{
-                fontSize: 13, color: "rgba(255,255,255,0.85)",
-                fontStyle: "italic", whiteSpace: "nowrap"
-              }}>
-                {typingUser.map(u => u.username).join(", ")} {typingUser.length > 1 ? "are" : "is"} typing
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                {[0, 0.25, 0.5].map((d, i) => (
-                  <div key={i} style={{
-                    width: 7, height: 7, borderRadius: "50%",
-                    background: "linear-gradient(135deg,#667eea,#764ba2)",
-                    animation: `typingGradient 1.4s infinite ${d}s`
-                  }} />
-                ))}
-              </div>
-            </div>
-          )}
-
-      {/* Message input */}
-      <div style={{ marginTop: 10, display: "flex" }}>
+      <div className="chat-input">
         <input
-          value={messageText}
-          onChange={(e) => {
-            setMessageText(e.target.value);
-            handleTyping();
-          }}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onInput={sendTyping}
           placeholder="Type your message..."
-          style={{
-            flex: 1,
-            padding: "12px 14px",
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.3)",
-            background: "rgba(255,255,255,0.1)",
-            color: "#fff",
-            outline: "none",
-            fontSize: 15,
-          }}
         />
-        <button
-          onClick={sendMessage}
-          style={{
-            marginLeft: 8,
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: 10,
-            background: "linear-gradient(135deg,#667eea,#764ba2)",
-            color: "#fff",
-            fontSize: 15,
-            cursor: "pointer",
-          }}
-        >
-          Send
-        </button>
+        <button onClick={sendMessage}>Send</button>
       </div>
-
-      {alertMessage && (
-        <GlassAlert message={alertMessage} onClose={() => setAlertMessage("")} />
-      )}
     </div>
   );
 }
