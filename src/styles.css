@@ -268,6 +268,7 @@ input, select {
 .macos-header.top-right .dot:hover {
   transform: scale(1.35);
   box-shadow: 0 0 14px rgba(255, 95, 87, 0.85);
+  animation:blurPulse .5s ease infinite, pulse .5s ease infinite;
 }
 
 /* ===== Body & rows ===== */
@@ -552,17 +553,17 @@ input, select {
 }
 @keyframes pulse {
     0% {
-        transform: scale(1.06);
+        transform: scale(1.35);
         box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
     }
 
     70% {
-        transform: scale(1.1);
+        transform: scale(1.7);
         box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
     }
 
     100% {
-        transform: scale(1.04);
+        transform: scale(1.38);
         box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
     }
 }
