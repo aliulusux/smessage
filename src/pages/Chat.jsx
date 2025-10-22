@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase"
 import GlassAlert from "../components/GlassAlert";
+import SettingsModal from "../components/SettingsModal"
 
 
 export default function Chat({ username, channelId, onLogout }) {
@@ -183,7 +184,7 @@ export default function Chat({ username, channelId, onLogout }) {
         </h1>
         <div>
           <button
-            onClick={() => setAlertMessage("Settings coming soon")}
+            onClick={SettingsModal}
             style={{
               marginRight: 10,
               border: "none",
