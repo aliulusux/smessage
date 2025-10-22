@@ -282,6 +282,8 @@ input, select {
   display: flex;
   align-items: center;
   gap: 18px;
+  -webkit-backdrop-filter: blur(12px) saturate(200%) brightness(1.15);
+  background:rgba(255,255,255,.08);
 }
 .settings-body.spaced label {
   flex: 0 0 130px;
