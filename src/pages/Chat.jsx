@@ -57,31 +57,67 @@ export default function Chat(){
     return ()=> supabase.removeChannel(pg)
   },[channelId])
 
-  // Presence on realtime channel (user list)
+// Presence tracking + realtime user list
+useEffect(() => {
+  const updateSelfActive = async () => {
+    await supabase
+      .from("users")
+      .update({ last_active: new Date().toISOString() })
+      .eq("username", username);
+  };
+
+  // Update last_active every 30 seconds
+  updateSelfActive();
+  const interval = setInterval(updateSelfActive, 30000);
+
+  // Load all users and update online status
+  const loadUsers = async () => {
+    const { data } = await supabase.from("users").select("username, last_active");
+    if (data) setUsers(data);
+  };
+  loadUsers();
+
+  // Realtime sync
+  const sub = supabase
+    .channel("users-updates")
+    .on("postgres_changes", { event: "*", schema: "public", table: "users" }, loadUsers)
+    .subscribe();
+
+  return () => {
+    clearInterval(interval);
+    supabase.removeChannel(sub);
+  };
+}, [username]);
+
+  // Load all users (optional display)
   useEffect(()=>{
-    const rc = supabase.channel(`presence-${channelId}`, {
-      config: { presence: { key: username } }
-    })
+    const loadUsers = async ()=>{
+      const { data } = await supabase.from("users").select("username")
+      if(data) setUsers(data.map(u=>u.username))
+    }
+    loadUsers()
+    const sub = supabase.channel("users-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, loadUsers)
+      .subscribe()
+    return ()=> supabase.removeChannel(sub)
+  },[])
 
-    rc.on("presence", { event: "sync" }, ()=>{
-      const state = rc.presenceState()
-      const all = Object.values(state).flat().map(p=>p.key)
-      setUsers(Array.from(new Set(all)))
-    })
-    rc.subscribe(status=>{
-      if(status === "SUBSCRIBED"){
-        rc.track({ key: username })
-      }
-    })
-    return ()=> supabase.removeChannel(rc)
-  },[channelId, username])
-
+  // Message Spam blocker
+  const lastSent = useRef(0)
   const sendMessage = async (content)=>{
+    const now = Date.now()
+    if(now - lastSent.current < 3000){ // 2 seconds cooldown
+      alert("You're sending messages too quickly. Please wait a moment.")
+      return
+    }
+    lastSent.current = now
+
     const { error } = await supabase.from("messages").insert({
       channel_id: channelId, username, content
     })
     if(error) alert(error.message)
   }
+
 
   const logout = ()=>{
     localStorage.removeItem("username")
@@ -107,11 +143,69 @@ export default function Chat(){
         </div>
 
         <div className="users">
-          <div style={{fontWeight:700, marginBottom:10}}>Users online</div>
-          {users.map(u=>(
-            <div key={u} style={{marginBottom:6}}>{u}</div>
-          ))}
-          {users.length===0 && <div style={{opacity:.8}}>No one yet</div>}
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>
+            Users{" "}
+            {(() => {
+              const onlineCount = users.filter(
+                (u) => Date.now() - new Date(u.last_active).getTime() < 45000
+              ).length;
+              return (
+                <span style={{ fontWeight: 400, opacity: 0.8 }}>
+                  ({onlineCount} online)
+                </span>
+              );
+            })()}
+          </div>
+
+          {users.length > 0 ? (
+            users.map((u) => {
+              const lastActive = new Date(u.last_active).getTime();
+              const diffMs = Date.now() - lastActive;
+              const isOnline = diffMs < 45000; // active within last 45s
+
+              // convert ms to human readable time
+              let lastSeen = "";
+              if (!isOnline) {
+                const minutes = Math.floor(diffMs / 60000);
+                const hours = Math.floor(minutes / 60);
+                if (minutes < 1) lastSeen = "just now";
+                else if (minutes < 60) lastSeen = `${minutes} min ago`;
+                else if (hours < 24) lastSeen = `${hours} hr ago`;
+                else lastSeen = `${Math.floor(hours / 24)} day(s) ago`;
+              }
+
+              return (
+                <div
+                  key={u.username}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                    marginBottom: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: isOnline ? "#32cd32" : "#888",
+                      }}
+                    ></div>
+                    <span>{u.username}</span>
+                  </div>
+                  {!isOnline && (
+                    <div style={{ marginLeft: 18, fontSize: 12, opacity: 0.7 }}>
+                      last seen {lastSeen}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <div style={{ opacity: 0.8 }}>No users yet</div>
+          )}
         </div>
       </div>
 
