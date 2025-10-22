@@ -53,10 +53,10 @@ export default function Join(){
   }
 
   return (
-    {alertMessage && (
-      <GlassAlert message={alertMessage} onClose={() => setAlertMessage("")} />
-    )}
     <div className="container" style={{maxWidth:920}}>
+      {alertMessage && (
+        <GlassAlert message={alertMessage} onClose={() => setAlertMessage("")} />
+      )}
       <div className="card">
         <h1 style={{marginTop:0, textAlign:"center"}}>Join sMessage</h1>
         <p style={{textAlign:"center", opacity:.85}}>Enter your username and select a channel to start chatting</p>
