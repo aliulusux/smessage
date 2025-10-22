@@ -111,37 +111,43 @@ input, select {
 .user-row .dot { width:8px; height:8px; border-radius:999px; background: #22c55e; display:inline-block; }
 .user-row .typing { margin-left:auto; font-size:.8em; color: var(--muted); }
 
-/* ===== Enhanced Glass Settings Modal ===== */
+/* ===== Fixed Glass Settings Modal with macOS Red Dot ===== */
 .modal-backdrop.glass {
   backdrop-filter: blur(18px) brightness(0.7);
   background: rgba(10, 10, 25, 0.4);
+  z-index: 50;
 }
 
-.glass-modal {
+.glass-modal.settings-modal {
   background: rgba(30, 35, 60, 0.35);
   backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
+  width: min(640px, 92vw);
+  padding-bottom: 20px;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
 }
 
-.macos-head {
+.macos-header {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  padding-top: 16px;
-  padding-bottom: 10px;
-}
-
-.macos-head h3 {
+  padding: 16px 20px 8px;
+  font-weight: 700;
   font-size: 1.2rem;
-  letter-spacing: 0.02em;
 }
 
 .macos-dots {
   position: absolute;
   left: 16px;
-  top: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   gap: 8px;
 }
@@ -158,11 +164,33 @@ input, select {
 .macos-dots .dot:hover { transform: scale(1.2); }
 .macos-dots .red { background: #ff5f57; }
 
-/* Dropdown and range glass look */
-select, input[type="range"] {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: var(--text);
+.settings-body {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
 }
+
+.settings-body .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.settings-body label {
+  flex: 0 0 110px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.settings-body select,
+.settings-body input[type="range"] {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+}
+
