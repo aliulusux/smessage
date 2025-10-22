@@ -23,6 +23,9 @@ body {
 body {
   background-color: var(--bg);
   color: var(--text);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 button {
   transition: background-color 0.2s, color 0.2s;
