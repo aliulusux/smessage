@@ -558,12 +558,12 @@ input, select {
     }
 
     70% {
-        transform: scale(1.7);
-        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+        transform: scale(1.45);
+        box-shadow: 0 0 10px 10px rgba(255, 0, 0, 0.116);
     }
 
     100% {
-        transform: scale(1.38);
-        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+        transform: scale(1.4);
+        box-shadow: 0 0 15px 8px rgba(255, 0, 0, 0);
     }
 }
