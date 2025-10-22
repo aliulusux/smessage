@@ -1,6 +1,7 @@
-import { motion } from "framer-motion";
+"use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import IntroSlider from "@/components/IntroSlider";
 
 export default function Home() {
