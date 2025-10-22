@@ -375,14 +375,10 @@ input, select {
   }
 }
 
-/* === Menu Items === 
+/* === Menu Items === */
 .glass-select-menu li {
-  padding: 9px 12px;
-  border-radius: 8px;
-  color: rgba(255,255,255,0.9);
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}*/
+  font-family: 'Brush Script MT', cursive;
+}
 
 .glass-select-menu li:hover {
   background: rgba(255,255,255,0.18);
@@ -492,7 +488,6 @@ input, select {
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-family: 'Brush Script MT', cursive;
 }
 
 .close-dot {
