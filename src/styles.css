@@ -447,12 +447,11 @@ input, select {
 /* Colored dot */
 .theme-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px rgba(0,0,0,.35);}
 
-.glass-option:hover .theme-dot {
+/* .glass-option:hover .theme-dot {
   transform: scale(1.2);
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
   animation:blurPulse .5s ease infinite, pulse .5s ease infinite;
-  
-}
+}*/
 
 .glass-option {
   display: flex;
