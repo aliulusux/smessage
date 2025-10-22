@@ -451,7 +451,6 @@ input, select {
   border-radius:50%;
   flex-shrink:0;
   box-shadow:0 0 6px rgba(0,0,0,.35);
-  animation:blurPulse .5s ease infinite, pulse .5s ease infinite;
 }
 
 /* .glass-option:hover .theme-dot {
@@ -504,6 +503,7 @@ input, select {
   box-shadow: 0 0 8px rgba(255, 95, 86, 0.7);
   cursor: pointer;
   transition: transform 0.15s ease;
+  animation:blurPulse .5s ease infinite, pulse .5s ease infinite;
 }
 
 .close-dot:hover {
@@ -553,16 +553,16 @@ input, select {
 @keyframes pulse {
     0% {
         transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
     }
 
     70% {
         transform: scale(1.02);
-        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
     }
 
     100% {
         transform: scale(1.06);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
     }
 }
