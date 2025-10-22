@@ -283,27 +283,20 @@ input, select {
   opacity: .95;
 }
 
-/* === Dropdown Button === */
-.glass-select-btn {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(20px) saturate(150%);
-  color: #fff;
-  font-size: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Button (closed state) */
+.glass-select-btn{
+  width:100%;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 14px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.08);
+  color:var(--text); backdrop-filter:blur(18px) saturate(150%);
+  cursor:pointer; transition:background .2s,border-color .2s;
 }
 
-.glass-select-btn:hover {
-  background: rgba(255,255,255,0.14);
-  border-color: rgba(255,255,255,.22);
-}
+.glass-select-btn:hover{ background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.22); }
+.glass-select-value{display:flex;align-items:center;gap:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.glass-select-caret{opacity:.8}
 
 .arrow {
   opacity: 0.7;
@@ -329,7 +322,6 @@ input, select {
   }
 }
 
-
 .glass-select-btn:active .arrow {
   transform: rotate(180deg);
 }
@@ -341,39 +333,16 @@ input, select {
   white-space: nowrap; 
 }
 
-.glass-select-caret { 
-  opacity: .8; 
-}
-
-/* === Blur Pulse Effect === */
-@keyframes blurPulse {
-  0% {
-    backdrop-filter: blur(14px) saturate(130%) brightness(0.95);
-  }
-  40% {
-    backdrop-filter: blur(26px) saturate(180%) brightness(1.25);
-  }
-  100% {
-    backdrop-filter: blur(22px) saturate(160%) brightness(1.15);
-  }
-}
-
 /* === Dropdown Menu === */
-.glass-select-menu {
-  z-index: 9999;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(24px) saturate(160%) brightness(1.15);
-  box-shadow: 0 16px 50px rgba(0,0,0,0.55);
-  list-style: none;
-  padding: 6px;
-  margin: 0;
-  overflow-y: auto;
-  max-height: 260px;
-  animation:
-    fadeSlideIn 0.25s ease forwards,
-    blurPulse 0.5s ease forwards; /* <— added pulse */
+.glass-select-menu{
+  position:absolute; z-index:2000; max-height:260px; overflow:auto;
+  padding:6px; margin:0; list-style:none;
+  width:100%;
+  border-radius:12px; border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.10);
+  backdrop-filter:blur(22px) saturate(160%) brightness(1.1);
+  box-shadow:0 16px 50px rgba(0,0,0,.55);
+  animation:fadeSlideIn .25s ease forwards, blurPulse .5s ease forwards;
 }
 
 /* === Menu Items === */
@@ -390,14 +359,10 @@ input, select {
   transform: scale(1.02);
 }
 
-.glass-select-item {
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
-}
-.glass-select-item:hover { background: rgba(255,255,255,.10); }
-.glass-select-item.active { background: rgba(255,255,255,.14); }
+/* Items */
+.glass-select-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;color:var(--text);cursor:pointer;}
+.glass-select-item:hover{background:rgba(255,255,255,.14);}
+.glass-select-item.active{background:rgba(255,255,255,.18);}
 
 /* thin nice scrollbar for the glass menu */
 .glass-select-menu::-webkit-scrollbar { width: 8px; }
@@ -449,17 +414,8 @@ input, select {
   cursor: pointer;
 }
 
-.theme-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 10px;
-  flex-shrink: 0;
-  background: var(--dot-color, #fff);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+/* Colored dot */
+.theme-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px rgba(0,0,0,.35);}
 
 .glass-option:hover .theme-dot {
   transform: scale(1.2);
@@ -547,5 +503,13 @@ input, select {
 .glass-select:hover,
 .glass-slider:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* Animations */
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(-6px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes blurPulse{
+  0%{backdrop-filter:blur(14px) saturate(130%) brightness(.95);}
+  40%{backdrop-filter:blur(26px) saturate(180%) brightness(1.25);}
+  100%{backdrop-filter:blur(22px) saturate(160%) brightness(1.1);}
 }
 

@@ -3,14 +3,16 @@ import { createPortal } from "react-dom";
 
 
 
-export default function GlassSelect({ value, onChange, options }) {
+export default function GlassSelect({ value, onChange, options, labelRender, showDot=true, }) {
   const [open, setOpen] = useState(false);
-  const [menuStyle, setMenuStyle] = useState({});
   const btnRef = useRef(null);
-
+  const menuRef = useRef(null);
+  const [menuStyle, setMenuStyle] = useState({});
+   
+  const label = labelRender ? labelRender(value) : value;
   const toggle = () => setOpen((o) => !o);
 
-  const themeColors = {
+  export const THEME_SWATCH = {
     sunset: "linear-gradient(135deg, #ff9966, #ff5e62)",
     neon: "linear-gradient(135deg, #00ffe0, #0078ff)",
     dark: "linear-gradient(135deg, #111, #333)",
@@ -23,56 +25,98 @@ export default function GlassSelect({ value, onChange, options }) {
     sand: "linear-gradient(135deg, #FBD786, #f7797d)"
   };
 
+  // position menu under button
+  const placeMenu = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setMenuStyle({
+      position: "absolute",
+      top: `${r.bottom + window.scrollY + 6}px`,
+      left: `${r.left + window.scrollX}px`,
+      width: `${r.width}px`,
+    });
+  };
+
   // Calculate dropdown position
   useEffect(() => {
-    if (open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      setMenuStyle({
-        position: "absolute",
-        top: `${rect.bottom + window.scrollY + 6}px`,
-        left: `${rect.left + window.scrollX}px`,
-        width: `${rect.width}px`,
-      });
-    }
-  }, [open]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const close = (e) => {
-      if (btnRef.current && !btnRef.current.contains(e.target)) {
+    if (!open) return;
+    placeMenu();
+    const closeOnOutside = (e) => {
+      if (
+        !btnRef.current?.contains(e.target) &&
+        !menuRef.current?.contains(e.target)
+      ) {
         setOpen(false);
       }
     };
-    if (open) document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
+    const onResize = () => placeMenu();
+    document.addEventListener("mousedown", closeOnOutside);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onResize, true);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutside);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onResize, true);
+    };
   }, [open]);
 
   return (
     <>
       <button
-        ref={btnRef}
-        onClick={toggle}
-        className="glass-select-btn"
         type="button"
+        ref={btnRef}
+        className="glass-select-btn"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
       >
-        {value}
-        <span className="arrow">▾</span>
+        <span className="glass-select-value">
+          {showDot && THEME_SWATCH[value] && (
+            <span
+              className="theme-dot"
+              style={{ background: THEME_SWATCH[value] }}
+            />
+          )}
+          {label}
+        </span>
+        <span className="glass-select-caret">▾</span>
       </button>
 
-      {open && (
-        <div className="glass-select-menu">
-            {options.map((opt) => (
-            <div
-                key={opt}
-                className={`glass-option ${opt === value ? "selected" : ""}`}
-                onClick={() => handleSelect(opt)}
-            >
-                <span className="theme-dot" style={{ background: themeColors[opt] }} />
-                <span>{opt}</span>
-            </div>
-            ))}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <ul
+            ref={menuRef}
+            className="glass-select-menu"
+            style={menuStyle}
+            role="listbox"
+          >
+            {options.map((opt) => {
+              const text = labelRender ? labelRender(opt) : opt;
+              const active = opt === value;
+              return (
+                <li
+                  key={String(opt)}
+                  role="option"
+                  aria-selected={active}
+                  className={`glass-select-item ${active ? "active" : ""}`}
+                  onClick={() => {
+                    onChange(opt);
+                    setOpen(false);
+                  }}
+                >
+                  {showDot && THEME_SWATCH[opt] && (
+                    <span
+                      className="theme-dot"
+                      style={{ background: THEME_SWATCH[opt] }}
+                    />
+                  )}
+                  <span className="item-text">{text}</span>
+                </li>
+              );
+            })}
+          </ul>,
+          document.body
+        )}
     </>
   );
 }
