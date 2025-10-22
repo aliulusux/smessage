@@ -86,3 +86,21 @@ export default function Join() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
+
+        <div className="channel-list">
+          <h3>Available Channels</h3>
+          {channels.map((ch) => (
+            <div key={ch.id} className="channel-item">
+              <span>{ch.name}</span>
+              <button onClick={() => joinChannel(ch.id)}>Join</button>
+            </div>
+          ))}
+        </div>
+
+        <button className="btn" onClick={createChannel}>
+          Create Channel
+        </button>
+      </div>
+    </div>
+  );
+}
