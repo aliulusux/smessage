@@ -157,9 +157,9 @@ input, select {
   position: absolute;
   right: 22px;
   top: 22px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 100%;
   background: #ff5f57;
   border: none;
   cursor: pointer;
