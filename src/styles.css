@@ -422,8 +422,7 @@ input, select {
   border: 1px solid rgba(49, 179, 255, 0.993);
   outline: none;
   -webkit-backdrop-filter: blur(12px) saturate(200%) brightness(1.15);
-  gap:12px;
-  padding:15px 17px;
+  padding:8px 8px;
 }
 .glass-range::-webkit-slider-thumb {
   -webkit-appearance: none;
