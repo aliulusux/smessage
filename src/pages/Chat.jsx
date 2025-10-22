@@ -6,7 +6,7 @@ import MessageList from "../components/MessageList.jsx"
 import MessageInput from "../components/MessageInput.jsx"
 
 const ONLINE_WINDOW_MS = 45000
-const ACTIVE_UPDATE_MS = 30000
+const ACTIVE_UPDATE_MS = 15000
 const SPAM_COOLDOWN_MS = 2000
 const TYPING_TIMEOUT_MS = 4000
 
@@ -23,7 +23,7 @@ export default function Chat() {
 
   useEffect(() => { if (!username) nav("/join") }, [username, nav])
 
-  // Load channel & messages
+  // ✅ Load channel & messages
   useEffect(() => {
     const load = async () => {
       const { data: ch } = await supabase.from("channels").select("*").eq("id", channelId).single()
@@ -40,7 +40,7 @@ export default function Chat() {
     load()
   }, [channelId, nav])
 
-  // Realtime messages
+  // ✅ Realtime new messages
   useEffect(() => {
     const sub = supabase.channel(`messages-${channelId}`)
       .on("postgres_changes",
@@ -56,14 +56,14 @@ export default function Chat() {
     return () => supabase.removeChannel(sub)
   }, [channelId])
 
-  // Typing realtime
+  // ✅ Typing realtime (unchanged)
   useEffect(() => {
     const typingSub = supabase.channel(`typing-${channelId}`)
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (payload.username === username) return
         setTypingUsers(prev => {
-          const existing = prev.find(u => u.username === payload.username)
-          if (existing) return prev
+          const exists = prev.find(u => u.username === payload.username)
+          if (exists) return prev
           return [...prev, { username: payload.username, timeout: Date.now() + TYPING_TIMEOUT_MS }]
         })
       })
@@ -79,27 +79,37 @@ export default function Chat() {
     }
   }, [username, channelId])
 
-  // Presence management
+  // ✅ Fix presence sync + new tab detection
   useEffect(() => {
     if (!username) return
 
-    const updateSelf = async () => {
-      await supabase.from("users").update({ last_active: new Date().toISOString() }).eq("username", username)
-    }
     const refreshUsers = async () => {
       const { data } = await supabase.from("users").select("username,last_active")
       setUsers(data || [])
     }
 
+    const markActive = async () => {
+      const now = new Date().toISOString()
+      const { error } = await supabase
+        .from("users")
+        .upsert({ username, last_active: now })
+      if (error) console.error("User update failed:", error)
+    }
+
     refreshUsers()
-    const interval = setInterval(updateSelf, ACTIVE_UPDATE_MS)
-    const sub = supabase.channel("users-updates")
+    markActive()
+
+    const interval = setInterval(markActive, ACTIVE_UPDATE_MS)
+
+    const sub = supabase.channel("users-sync")
       .on("postgres_changes", { event: "*", schema: "public", table: "users" }, refreshUsers)
       .subscribe()
 
-    const cleanup = async () => { await supabase.from("users").delete().eq("username", username) }
-    window.addEventListener("beforeunload", cleanup)
+    const cleanup = async () => {
+      await supabase.from("users").delete().eq("username", username)
+    }
 
+    window.addEventListener("beforeunload", cleanup)
     return () => {
       clearInterval(interval)
       supabase.removeChannel(sub)
@@ -108,18 +118,16 @@ export default function Chat() {
     }
   }, [username])
 
-  // Spam limiter + send message
   const lastSent = useRef(0)
   const sendMessage = async (content) => {
     const now = Date.now()
-    if (now - lastSent.current < SPAM_COOLDOWN_MS) return alert("Slow down a bit 😊")
+    if (now - lastSent.current < SPAM_COOLDOWN_MS) return alert("Slow down 😊")
     lastSent.current = now
     if (!content.trim()) return
     const { error } = await supabase.from("messages").insert({ channel_id: channelId, username, content })
     if (error) alert(error.message)
   }
 
-  // Broadcast typing event
   const sendTyping = async () => {
     await supabase.channel(`typing-${channelId}`).send({
       type: "broadcast",
@@ -166,39 +174,26 @@ export default function Chat() {
             <MessageList messages={messages} username={username} />
           </div>
 
-          {/* typing indicator */}
+          {/* Typing indicator with gradient dots */}
           {typingUsers.length > 0 && (
             <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              margin: "6px 0",
-              paddingLeft: 10,
+              display: "flex", alignItems: "center", gap: 6,
+              margin: "6px 0", paddingLeft: 10
             }}>
               <div style={{
-                fontSize: 13,
-                color: "rgba(255,255,255,0.8)",
-                fontStyle: "italic",
-                whiteSpace: "nowrap"
+                fontSize: 13, color: "rgba(255,255,255,0.85)",
+                fontStyle: "italic", whiteSpace: "nowrap"
               }}>
                 {typingUsers.map(u => u.username).join(", ")} {typingUsers.length > 1 ? "are" : "is"} typing
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div className="dot" style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.8)",
-                  animation: "typingDot 1.4s infinite"
-                }}></div>
-                <div className="dot" style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.8)",
-                  animation: "typingDot 1.4s infinite 0.2s"
-                }}></div>
-                <div className="dot" style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.8)",
-                  animation: "typingDot 1.4s infinite 0.4s"
-                }}></div>
+                {[0, 0.25, 0.5].map((d, i) => (
+                  <div key={i} style={{
+                    width: 7, height: 7, borderRadius: "50%",
+                    background: "linear-gradient(135deg,#667eea,#764ba2)",
+                    animation: `typingGradient 1.4s infinite ${d}s`
+                  }} />
+                ))}
               </div>
             </div>
           )}
@@ -215,7 +210,10 @@ export default function Chat() {
             return (
               <div key={u.username} style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: online ? "#32cd32" : "#888" }}></div>
+                  <div style={{
+                    width: 10, height: 10, borderRadius: "50%",
+                    background: online ? "#32cd32" : "#888"
+                  }}></div>
                   <span>{u.username}</span>
                 </div>
                 {!online && <div style={{ marginLeft: 18, fontSize: 12, opacity: 0.7 }}>last seen {lastSeen(u)}</div>}
