@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import ChatWindow from "@/components/ChatWindow";
 import SettingsModal from "@/components/SettingsModal";
 
-export default function ChatPage() {
+function ChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const channelId = searchParams.get("channel");
@@ -222,5 +223,13 @@ export default function ChatPage() {
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading chat...</div>}>
+      <ChatPageContent />
+    </Suspense>
   );
 }
