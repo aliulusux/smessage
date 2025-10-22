@@ -391,7 +391,8 @@ input, select {
 /* Items */
 .glass-select-item{-webkit-backdrop-filter: blur(12px) saturate(200%) brightness(1.15);display:flex;align-items:center;gap:12px;padding:15px 17px;color:var(--text);cursor:pointer;}
 .glass-select-item:hover{background:rgba(255,255,255,.14);backdrop-filter: blur(30px) saturate(200%);}
-.glass-select-item.active{background:rgba(255, 255, 255, 0.158);border-radius:15px;transform: scale(1.08);}
+.glass-select-item.active{background:rgba(255, 255, 255, 0.158);border-radius:18px;transform: scale(1.04);}
+
 
 /* thin nice scrollbar for the glass menu */
 .glass-select-menu::-webkit-scrollbar { width: 8px; }
@@ -498,7 +499,7 @@ input, select {
 }
 
 .close-dot:hover {
-  transform: scale(1.08);
+  transform: scale(1.03);
 }
 
 .modal-title {
