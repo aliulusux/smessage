@@ -111,7 +111,7 @@ input, select {
 .user-row .dot { width:8px; height:8px; border-radius:999px; background: #22c55e; display:inline-block; }
 .user-row .typing { margin-left:auto; font-size:.8em; color: var(--muted); }
 
-/* ===== True Centered Glass Modal ===== */
+/* ===== Polished Glass Modal (macOS refined) ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -124,83 +124,70 @@ input, select {
   animation: fadeIn 0.25s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .settings-modal {
   width: min(640px, 92vw);
-  border-radius: 18px;
+  border-radius: 22px;
   background: rgba(30, 35, 60, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(22px) saturate(180%);
   color: var(--text);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transform: translateY(0);
-  animation: popIn 0.3s cubic-bezier(.2,.9,.3,1.2);
+  padding-bottom: 24px;
 }
 
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.9) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-/* macOS header + red dot */
-.macos-header {
+.macos-header.top-right {
   position: relative;
-  padding: 16px 20px 10px;
+  padding: 20px;
   text-align: center;
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
 }
 
-.macos-dots {
+.macos-header.top-right .dot {
   position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 8px;
-}
-
-.macos-dots .dot {
-  width: 14px;
-  height: 14px;
+  right: 18px;
+  top: 18px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
+  background: #ff5f57;
   border: none;
   cursor: pointer;
   box-shadow: 0 0 6px rgba(0,0,0,0.3);
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.macos-dots .dot:hover { transform: scale(1.2); }
-.macos-dots .red { background: #ff5f57; }
+.macos-header.top-right .dot:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(255, 95, 87, 0.8);
+}
 
-/* settings body */
-.settings-body {
+.settings-body.spaced {
   display: grid;
-  gap: 18px;
-  padding: 22px;
+  gap: 26px;
+  padding: 24px 28px;
 }
 
-.settings-body .row {
+.settings-body.spaced .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 18px;
 }
 
-.settings-body label {
-  flex: 0 0 110px;
+.settings-body.spaced label {
+  flex: 0 0 120px;
   font-weight: 600;
   text-align: left;
+  color: var(--text);
+  opacity: 0.95;
 }
 
-.settings-body select,
-.settings-body input[type="range"] {
+.settings-body.spaced select,
+.settings-body.spaced input[type="range"] {
   flex: 1;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -208,5 +195,12 @@ input, select {
   padding: 10px 12px;
   border-radius: 10px;
   backdrop-filter: blur(8px);
+  transition: background 0.2s ease, border 0.2s ease;
 }
+.settings-body.spaced select:hover,
+.settings-body.spaced input[type="range"]:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 
