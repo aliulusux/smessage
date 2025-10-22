@@ -147,22 +147,12 @@ input, select {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.08);
+  border-radius: inherit;
+  background: radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 100%);
   backdrop-filter: blur(20px) saturate(150%);
   pointer-events: none;
   z-index: 0;
 }
-/*.settings-modal::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}*/
 
 .settings-modal {
   width: min(640px, 92vw);
