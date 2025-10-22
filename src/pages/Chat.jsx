@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../supabase";
 
 export default function Chat({ nick, channel, users, messages, sendMessage, sendTyping }) {
   const inputRef = useRef(null);
