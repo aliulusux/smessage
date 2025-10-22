@@ -143,7 +143,7 @@ input, select {
   animation: fadeIn 0.25s ease;
 }
 
-/*.settings-modal::before {
+.settings-modal::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -152,8 +152,9 @@ input, select {
   background: rgba(255,255,255,0.08);
   backdrop-filter: blur(20px) saturate(150%);
   pointer-events: none;
-}*/
-.settings-modal::before {
+  z-index: 0;
+}
+/*.settings-modal::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -161,7 +162,7 @@ input, select {
   background: radial-gradient(circle at top left, rgba(255,255,255,0.12), transparent 70%);
   pointer-events: none;
   z-index: 0;
-}
+}*/
 
 .settings-modal {
   width: min(640px, 92vw);
