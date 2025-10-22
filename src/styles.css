@@ -107,7 +107,7 @@ input, select {
 .users { background: color-mix(in oklab, var(--card) 92%, transparent); border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden; }
 .users-head { padding:12px; font-weight:700; border-bottom:1px solid rgba(255,255,255,.06); }
 .users-body { max-height: calc(60vh + 56px); overflow:auto; padding:8px; display:grid; gap:6px; }
-.user-row { padding-left:10px;display:flex; align-items:center; gap:8px; }
+.user-row { padding:10px;display:flex; align-items:center; gap:8px; }
 .user-row .dot { width:8px; height:8px; border-radius:999px; background: #22c55e;animation:onlinepulse .5s ease infinite;}
 .user-row .typing { margin-left:auto; font-size:.8em; color: var(--muted); }
 
