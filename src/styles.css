@@ -344,9 +344,7 @@ input, select {
   width:100%;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.027) !important;
-  backdrop-filter: blur(24px) saturate(180%) brightness(1.15);
-  -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(1.15);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 16px 48px rgba(255, 255, 255, 0.048);
   transition: backdrop-filter 0.3s ease, background 0.3s ease;
   animation:fadeSlideIn .25s ease forwards, blurPulse .5s ease forwards;
 }
@@ -394,12 +392,12 @@ input, select {
 .glass-select-item:hover{background:rgba(255,255,255,.14);backdrop-filter: blur(30px) saturate(200%);}
 .glass-select-item.active{background:rgba(255, 255, 255, 0.055);}
 
-/* thin nice scrollbar for the glass menu */
+/* thin nice scrollbar for the glass menu 
 .glass-select-menu::-webkit-scrollbar { width: 8px; }
 .glass-select-menu::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,.25);
   border-radius: 6px;
-}
+}*/
 
 /* === Fade + Slide Animation === */
 @keyframes fadeSlideIn {
