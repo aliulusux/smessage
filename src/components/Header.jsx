@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { settings } from "../state/settingsStore";
 import SettingsModal from "./SettingsModal";
 
