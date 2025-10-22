@@ -4,7 +4,8 @@ import SettingsModal from "./SettingsModal";
 
 export default function Header({ onBack, onLogout }) {
   const s = settings.use();
-  const [open, setOpen] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
 
   return (
     <header className="header">
@@ -13,10 +14,10 @@ export default function Header({ onBack, onLogout }) {
         <strong>sMessage</strong>
       </div>
       <div className="right">
-        <button onClick={()=>setOpen(true)}>Settings</button>
+        <button onClick={() => setSettingsOpen(true)}>⚙️ Settings</button>
         <button className="outline" onClick={onLogout}>Logout</button>
       </div>
-      <SettingsModal open={open} onClose={()=>setOpen(false)} />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </header>
   );
 }
