@@ -393,12 +393,12 @@ input, select {
 .glass-select-item:hover{background:rgba(255,255,255,.14);backdrop-filter: blur(30px) saturate(200%);border-radius:10px;}
 .glass-select-item.active{background:rgba(255, 255, 255, 0.055);}
 
-/* thin nice scrollbar for the glass menu 
+/* thin nice scrollbar for the glass menu */
 .glass-select-menu::-webkit-scrollbar { width: 8px; }
 .glass-select-menu::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,.25);
   border-radius: 6px;
-}*/
+}
 
 /* === Fade + Slide Animation === */
 @keyframes fadeSlideIn {
