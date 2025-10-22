@@ -183,37 +183,7 @@ export default function Chat({ username, channelId, onLogout }) {
           sMessage
         </h1>
         <div>
-          <button
-            onClick={SettingsModal}
-            style={{
-              marginRight: 10,
-              border: "none",
-              borderRadius: 10,
-              background: "linear-gradient(135deg,#667eea,#764ba2)",
-              color: "#fff",
-              padding: "8px 16px",
-              fontSize: 15,
-              cursor: "pointer",
-              transition: "0.3s",
-            }}
-          >
-            Settings
-          </button>
-          <button
-            onClick={onLogout}
-            style={{
-              border: "none",
-              borderRadius: 10,
-              background: "linear-gradient(135deg,#667eea,#764ba2)",
-              color: "#fff",
-              padding: "8px 16px",
-              fontSize: 15,
-              cursor: "pointer",
-              transition: "0.3s",
-            }}
-          >
-            Logout
-          </button>
+          <SettingsModal open={openSettings} onClose={() => setOpenSettings(false)} />
         </div>
       </div>
 
