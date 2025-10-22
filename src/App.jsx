@@ -6,6 +6,7 @@ import Chat from "./components/Chat.jsx";
 import { settings } from "./state/settingsStore.js";
 import { themes } from "./utils/themes.js";
 import { motion, AnimatePresence } from "framer-motion";
+import "./styles.css";
 
 export default function App() {
   const [step, setStep] = useState("intro"); // intro -> gate -> join -> chat
