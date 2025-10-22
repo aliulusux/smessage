@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 import GlassAlert from "../components/GlassAlert";
+
 
 export default function Chat({ username, channelId, onLogout }) {
   const [messages, setMessages] = useState([]);
