@@ -18,16 +18,25 @@ export default function Chat({ username, channelId, onLogout }) {
   }, [messages]);
 
   // Fetch messages
-  useEffect(() => {
-    const fetchMessages = async () => {
-      const { data } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("channel_id", channelId)
-        .order("created_at", { ascending: true });
-      setMessages(data || []);
-    };
-    fetchMessages();
+  const fetchMessages = async () => {
+    if (!channelId) {
+      console.warn("No channel ID defined — skipping message fetch.");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("channel_id", channelId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching messages:", error.message);
+      return;
+    }
+
+    setMessages(data || []);
+  };
+  fetchMessages();
 
     const channel = supabase
       .channel("messages")
