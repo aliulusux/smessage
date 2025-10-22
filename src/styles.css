@@ -417,7 +417,7 @@ input, select {
   appearance: none;
   width: 100%;
   height: 12px;
-  border-radius: 50%;
+  border-radius: 30px;
   background: rgba(255, 255, 255, 0);
   border: 1px solid rgba(49, 179, 255, 0.993);
   outline: none;
