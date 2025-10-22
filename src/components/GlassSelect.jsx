@@ -59,7 +59,7 @@ export default function GlassSelect({ value, onChange, options }) {
         <span className="arrow">▾</span>
       </button>
 
-      {isOpen && (
+      {Open && (
         <div className="glass-select-menu">
             {options.map((opt) => (
             <div
