@@ -274,7 +274,7 @@ export default function Chat({ username, channelId, onLogout }) {
       </div>
 
       {/* Typing indicator with gradient dots */}
-          {typingUsers.length > 0 && (
+          {typingUser.length > 0 && (
             <div style={{
               display: "flex", alignItems: "center", gap: 6,
               margin: "6px 0", paddingLeft: 10
@@ -283,7 +283,7 @@ export default function Chat({ username, channelId, onLogout }) {
                 fontSize: 13, color: "rgba(255,255,255,0.85)",
                 fontStyle: "italic", whiteSpace: "nowrap"
               }}>
-                {typingUsers.map(u => u.username).join(", ")} {typingUsers.length > 1 ? "are" : "is"} typing
+                {typingUser.map(u => u.username).join(", ")} {typingUser.length > 1 ? "are" : "is"} typing
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 {[0, 0.25, 0.5].map((d, i) => (
