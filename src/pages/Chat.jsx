@@ -1,252 +1,227 @@
-// src/pages/Chat.jsx
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { supabase } from "../lib/supabase"
-import HeaderBar from "../components/HeaderBar.jsx"
 import SettingsModal from "../components/SettingsModal.jsx"
 import MessageList from "../components/MessageList.jsx"
 import MessageInput from "../components/MessageInput.jsx"
 
-const ONLINE_WINDOW_MS = 45_000   // considered online if active within last 45s
-const ACTIVE_UPDATE_MS = 30_000   // how often we bump last_active
-const SPAM_COOLDOWN_MS = 2_000    // message rate limit per user
+const ONLINE_WINDOW_MS = 45000
+const ACTIVE_UPDATE_MS = 30000
+const SPAM_COOLDOWN_MS = 2000
+const TYPING_TIMEOUT_MS = 4000
 
 export default function Chat() {
   const { channelId } = useParams()
   const nav = useNavigate()
-
-  // UI state
   const [channel, setChannel] = useState(null)
   const [messages, setMessages] = useState([])
-  const [users, setUsers] = useState([]) // [{username, last_active}]
+  const [users, setUsers] = useState([])
+  const [typingUsers, setTypingUsers] = useState([])
   const [openSettings, setOpenSettings] = useState(false)
   const listRef = useRef(null)
-
-  // Username must be defined BEFORE any effects use it
   const username = useMemo(() => localStorage.getItem("username") || "", [])
 
-  // If someone opens /chat directly without username, send them back
-  useEffect(() => {
-    if (!username) nav("/join")
-  }, [username, nav])
+  useEffect(() => { if (!username) nav("/join") }, [username, nav])
 
-  // Load channel & initial messages
+  // Load channel & messages
   useEffect(() => {
-    let alive = true
-    const run = async () => {
-      const { data: ch, error: e1 } = await supabase
-        .from("channels")
-        .select("*")
-        .eq("id", channelId)
-        .single()
-
-      if (e1 || !ch) {
-        alert("Channel not found.")
-        nav("/join")
-        return
-      }
-      if (!alive) return
+    const load = async () => {
+      const { data: ch } = await supabase.from("channels").select("*").eq("id", channelId).single()
+      if (!ch) return nav("/join")
       setChannel(ch)
-
-      const { data: initial, error: e2 } = await supabase
+      const { data: msgs } = await supabase
         .from("messages")
         .select("*")
         .eq("channel_id", channelId)
         .order("created_at", { ascending: true })
-        .limit(500)
-
-      if (!alive) return
-      if (e2) console.error(e2)
-      setMessages(initial || [])
-
-      // scroll to bottom after initial load
-      setTimeout(() => {
-        listRef.current?.scrollTo({
-          top: listRef.current.scrollHeight,
-          behavior: "auto",
-        })
-      }, 0)
+      setMessages(msgs || [])
+      setTimeout(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight }), 0)
     }
-    run()
-    return () => {
-      alive = false
-    }
+    load()
   }, [channelId, nav])
 
-  // Realtime messages (INSERT)
+  // Realtime messages
   useEffect(() => {
-    if (!channelId) return
-    const sub = supabase
-      .channel(`messages-${channelId}`)
-      .on(
-        "postgres_changes",
+    const sub = supabase.channel(`messages-${channelId}`)
+      .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `channel_id=eq.${channelId}` },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new])
-          // smooth scroll down on new message
-          setTimeout(() => {
-            listRef.current?.scrollTo({
-              top: listRef.current.scrollHeight,
-              behavior: "smooth",
-            })
-          }, 50)
-        }
-      )
+        payload => {
+          setMessages(m => [...m, payload.new])
+          setTimeout(() => listRef.current?.scrollTo({
+            top: listRef.current.scrollHeight,
+            behavior: "smooth"
+          }), 80)
+        })
       .subscribe()
-
-    return () => {
-      supabase.removeChannel(sub)
-    }
+    return () => supabase.removeChannel(sub)
   }, [channelId])
 
-  // Presence: update our last_active regularly, and keep a realtime user list
+  // Typing realtime
   useEffect(() => {
-    if (!username) return
-
-    const updateSelfActive = async () => {
-      await supabase
-        .from("users")
-        .update({ last_active: new Date().toISOString() })
-        .eq("username", username)
-    }
-
-    // initial bump + interval
-    updateSelfActive()
-    const interval = setInterval(updateSelfActive, ACTIVE_UPDATE_MS)
-
-    // function to load all users (username + last_active)
-    const loadUsers = async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("username, last_active")
-      if (!error && data) {
-        setUsers(data)
-      }
-    }
-    loadUsers()
-
-    // subscribe to any change in users table to refresh list
-    const usersSub = supabase
-      .channel("users-updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, loadUsers)
+    const typingSub = supabase.channel(`typing-${channelId}`)
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        if (payload.username === username) return
+        setTypingUsers(prev => {
+          const existing = prev.find(u => u.username === payload.username)
+          if (existing) return prev
+          return [...prev, { username: payload.username, timeout: Date.now() + TYPING_TIMEOUT_MS }]
+        })
+      })
       .subscribe()
+
+    const interval = setInterval(() => {
+      setTypingUsers(prev => prev.filter(u => u.timeout > Date.now()))
+    }, 1000)
 
     return () => {
       clearInterval(interval)
-      supabase.removeChannel(usersSub)
+      supabase.removeChannel(typingSub)
+    }
+  }, [username, channelId])
+
+  // Presence management
+  useEffect(() => {
+    if (!username) return
+
+    const updateSelf = async () => {
+      await supabase.from("users").update({ last_active: new Date().toISOString() }).eq("username", username)
+    }
+    const refreshUsers = async () => {
+      const { data } = await supabase.from("users").select("username,last_active")
+      setUsers(data || [])
+    }
+
+    refreshUsers()
+    const interval = setInterval(updateSelf, ACTIVE_UPDATE_MS)
+    const sub = supabase.channel("users-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "users" }, refreshUsers)
+      .subscribe()
+
+    const cleanup = async () => { await supabase.from("users").delete().eq("username", username) }
+    window.addEventListener("beforeunload", cleanup)
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(sub)
+      window.removeEventListener("beforeunload", cleanup)
+      cleanup()
     }
   }, [username])
 
-  // Message sender with spam protection
-  const lastSentRef = useRef(0)
+  // Spam limiter + send message
+  const lastSent = useRef(0)
   const sendMessage = async (content) => {
-    const text = (content || "").trim()
-    if (!text) return
-
     const now = Date.now()
-    if (now - lastSentRef.current < SPAM_COOLDOWN_MS) {
-      alert("You're sending messages too quickly. Please wait a moment.")
-      return
-    }
-    lastSentRef.current = now
-
-    const { error } = await supabase.from("messages").insert({
-      channel_id: channelId,
-      username,
-      content: text,
-    })
+    if (now - lastSent.current < SPAM_COOLDOWN_MS) return alert("Slow down a bit 😊")
+    lastSent.current = now
+    if (!content.trim()) return
+    const { error } = await supabase.from("messages").insert({ channel_id: channelId, username, content })
     if (error) alert(error.message)
   }
 
-  const logout = () => {
+  // Broadcast typing event
+  const sendTyping = async () => {
+    await supabase.channel(`typing-${channelId}`).send({
+      type: "broadcast",
+      event: "typing",
+      payload: { username }
+    })
+  }
+
+  const logout = async () => {
+    await supabase.from("users").delete().eq("username", username)
     localStorage.removeItem("username")
     nav("/join")
   }
 
-  // Helpers
-  const isOnline = (iso) =>
-    Date.now() - new Date(iso).getTime() < ONLINE_WINDOW_MS
-
-  const lastSeenText = (iso) => {
-    const diffMs = Date.now() - new Date(iso).getTime()
-    const minutes = Math.floor(diffMs / 60000)
-    const hours = Math.floor(minutes / 60)
-    if (minutes < 1) return "just now"
-    if (minutes < 60) return `${minutes} min ago`
-    if (hours < 24) return `${hours} hr ago`
-    return `${Math.floor(hours / 24)} day(s) ago`
+  const isOnline = (u) => Date.now() - new Date(u.last_active).getTime() < ONLINE_WINDOW_MS
+  const lastSeen = (u) => {
+    const diff = Date.now() - new Date(u.last_active).getTime()
+    const min = Math.floor(diff / 60000)
+    if (min < 1) return "just now"
+    if (min < 60) return `${min} min ago`
+    return `${Math.floor(min / 60)} hr ago`
   }
 
-  const sortedUsers = [...users].sort((a, b) => {
-    const ao = isOnline(a.last_active)
-    const bo = isOnline(b.last_active)
-    if (ao !== bo) return ao ? -1 : 1 // online first
-    return a.username.localeCompare(b.username)
-  })
-
-  const onlineCount = users.filter((u) => isOnline(u.last_active)).length
+  const onlineCount = users.filter(isOnline).length
+  const sortedUsers = [...users].sort((a, b) => (isOnline(b) - isOnline(a)) || a.username.localeCompare(b.username))
 
   return (
-    <div className="container" style={{ maxWidth: 1080 }}>
-      <HeaderBar onSettings={() => setOpenSettings(true)} onLogout={logout} />
+    <div className="container" style={{ maxWidth: 1100 }}>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <h1 className="glow" style={{ fontSize: 28, fontWeight: 800 }}>sMessage</h1>
+        <div className="row" style={{ gap: 10 }}>
+          <button className="btn" onClick={() => setOpenSettings(true)}>Settings</button>
+          <button className="btn" onClick={logout}>Logout</button>
+        </div>
+      </div>
 
       <div className="chat-shell">
-        {/* Chat column */}
         <div className="chat-box">
-          <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
-            <div className="glow" style={{ fontSize: 20, fontWeight: 800 }}>
-              {channel ? channel.name : "…"}
-            </div>
+          <div className="glow" style={{ fontWeight: 700, fontSize: 20, marginBottom: 6 }}>
+            {channel?.name || "Channel"}
           </div>
 
           <div className="msgs" ref={listRef}>
-            <MessageList messages={messages} />
+            <MessageList messages={messages} username={username} />
           </div>
 
-          <MessageInput onSend={sendMessage} />
+          {/* typing indicator */}
+          {typingUsers.length > 0 && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              margin: "6px 0",
+              paddingLeft: 10,
+            }}>
+              <div style={{
+                fontSize: 13,
+                color: "rgba(255,255,255,0.8)",
+                fontStyle: "italic",
+                whiteSpace: "nowrap"
+              }}>
+                {typingUsers.map(u => u.username).join(", ")} {typingUsers.length > 1 ? "are" : "is"} typing
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div className="dot" style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.8)",
+                  animation: "typingDot 1.4s infinite"
+                }}></div>
+                <div className="dot" style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.8)",
+                  animation: "typingDot 1.4s infinite 0.2s"
+                }}></div>
+                <div className="dot" style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.8)",
+                  animation: "typingDot 1.4s infinite 0.4s"
+                }}></div>
+              </div>
+            </div>
+          )}
+
+          <MessageInput onSend={sendMessage} onTyping={sendTyping} />
         </div>
 
-        {/* Users column */}
         <div className="users">
           <div style={{ fontWeight: 700, marginBottom: 10 }}>
-            Users <span style={{ fontWeight: 400, opacity: 0.8 }}>({onlineCount} online)</span>
+            Users <span style={{ opacity: 0.8 }}>({onlineCount} online)</span>
           </div>
-
-          {sortedUsers.length > 0 ? (
-            sortedUsers.map((u) => {
-              const online = isOnline(u.last_active)
-              return (
-                <div
-                  key={u.username}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                    marginBottom: 8,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: "50%",
-                        background: online ? "#32cd32" : "#888",
-                      }}
-                    />
-                    <span>{u.username}</span>
-                  </div>
-                  {!online && (
-                    <div style={{ marginLeft: 18, fontSize: 12, opacity: 0.7 }}>
-                      last seen {lastSeenText(u.last_active)}
-                    </div>
-                  )}
+          {sortedUsers.map(u => {
+            const online = isOnline(u)
+            return (
+              <div key={u.username} style={{ marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: online ? "#32cd32" : "#888" }}></div>
+                  <span>{u.username}</span>
                 </div>
-              )
-            })
-          ) : (
-            <div style={{ opacity: 0.8 }}>No users yet</div>
-          )}
+                {!online && <div style={{ marginLeft: 18, fontSize: 12, opacity: 0.7 }}>last seen {lastSeen(u)}</div>}
+              </div>
+            )
+          })}
         </div>
       </div>
 
