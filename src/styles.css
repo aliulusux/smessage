@@ -77,9 +77,9 @@ body[data-theme="iced"] {
   --card:#1b213a;
   --brand1:#93c5fd; 
   --brand2:#67e8f9; 
-  --text-color: #222;
+  --text-color: #fff;
   --input-glow: #8fd7ff;
-  --theme-accent: linear-gradient(180deg, rgba(0,213,255,1) 2.5%, rgba(79,255,255,1 97.7% ));
+  --theme-accent: linear-gradient(180deg, rgba(0,213,255,1), rgba(79,255,255,1));
 }
 
 body[data-theme="ocean"] { 
