@@ -5,7 +5,7 @@ import MessageInput from "./MessageInput.jsx";
 import MessageBubble from "./MessageBubble.jsx";
 import { supabase, listMessages, sendMessage, subscribeMessages, presenceChannel } from "../lib/supabaseClient";
 import { motion } from "framer-motion";
-import TypingIndicator from "@/components/TypingIndicator";
+import TypingIndicator from "./TypingIndicator.jsx"
 
 export default function Chat({ username, channel, onBack, onLogout }) {
   const [msgs, setMsgs] = useState([]);
