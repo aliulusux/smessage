@@ -100,7 +100,7 @@ export default function Chat({ username, channel, onBack, onLogout }) {
               <MessageBubble key={m.id} me={m.sender===username} msg={m} />
             ))}
 
-            
+            {typing.length > 0 && <TypingIndicator />}
           </div>
           <MessageInput
             onSend={handleSend}

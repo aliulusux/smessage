@@ -36,13 +36,12 @@ export default function MessageBubble({ me, msg }) {
   minute: "2-digit",
 });
   return (
-    <div className={`bubble ${me ? "me" : ""}`}>
+    <div className={`bubble-wrap ${me ? "me" : ""}`}>
     <motion.div
       className={`message-bubble ${me ? "me" : ""}`}
       initial={{
         opacity: 0,
         y: 25,
-        x: me ? 20 : -20,
         scale: 0.9
       }}
       animate={{
@@ -53,7 +52,7 @@ export default function MessageBubble({ me, msg }) {
       }}
       transition={{
         type: "spring",
-        stiffness: 420,
+        stiffness: 260,
         damping: 28,
         mass: 0.5
       }}
