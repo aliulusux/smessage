@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles.css";
+import { motion } from "framer-motion";
 
 function StatusIcon({ status }) {
   if (status === "pending") return <Check className="icon pending" size={14} />;
