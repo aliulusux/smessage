@@ -81,7 +81,7 @@ input, select {
 .channels .list { display:grid; gap:12px; max-height: 55vh; overflow:auto; padding-right:4px; }
 .card { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px; border:1px solid rgba(255,255,255,.08); border-radius:14px; background: color-mix(in oklab, var(--card) 92%, transparent); }
 .card .title { font-weight:700; display:flex; align-items:center; gap:8px; }
-.card input { width: 240px; }
+.card input { width: 240px;border: 2px solid var(--bg);box-shadow: 0 1px 5px rgba(255, 255, 255, 0.025) }
 .lock { opacity:.8; }
 
 /* Chat layout */
