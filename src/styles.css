@@ -31,7 +31,7 @@ body[data-theme="dark"] {
 }
 
 body[data-theme="sunset"] { 
-  --bg: linear-gradient(180deg, #fb7185, #f97316); 
+  --bg: linear-gradient(180deg,#2a1335,#0f172a); 
   --brand1:#fb7185; 
   --brand2:#f97316; 
   --text-color: #fff;
@@ -40,7 +40,7 @@ body[data-theme="sunset"] {
 }
 
 body[data-theme="neon"] { 
-  --bg: linear-gradient(180deg, rgba(236,24,36,1), rgba(249,101,230,1)); 
+  --bg: linear-gradient(180deg,#0f1020,#030712); 
   --brand1:rgba(236,24,36,1); 
   --brand2:rgba(249,101,230,1); 
   --ring:#06b6d4; 
@@ -49,9 +49,9 @@ body[data-theme="neon"] {
   --theme-accent: linear-gradient(180deg, rgba(236,24,36,1), rgba(249,101,230,1));
 }
 body[data-theme="amethyst"] { 
-  --bg: linear-gradient(180deg, rgba(178,0,184,1), rgba(71,0,159,1)); 
-  --card:rgba(71,0,159,1); 
-  --text:rgba(178,0,184,1); 
+  --bg: linear-gradient(180deg,#f5f3ff,#fbf2fd); 
+  --card:#fff; 
+  --text:#ffffff; 
   --muted:#667085; 
   --brand1:rgba(178,0,184,1); 
   --brand2:rgba(71,0,159,1);
