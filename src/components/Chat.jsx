@@ -27,6 +27,19 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     return () => unsub();
   }, [channel.id]);
 
+  useEffect(() => {
+  const markSeen = async () => {
+    const unseen = msgs.filter(m => !m.seen && m.sender !== username);
+    for (const m of unseen) {
+      await supabase
+        .from("messages")
+        .update({ seen: true })
+        .eq("id", m.id);
+    }
+  };
+  markSeen();
+}, [msgs, username]);
+
   // presence + typing
   useEffect(() => {
     const ch = presenceChannel(channel.id, username);

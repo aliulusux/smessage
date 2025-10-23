@@ -14,15 +14,15 @@ function StatusIcon({ status }) {
         transition={{ duration: 0.25, ease: "easeOut" }}
         className="status-icon"
       >
-        {status === "pending" && <Check className="icon pending" size={14} />}
-        {status === "delivered" && <CheckCheck className="icon delivered" size={14} />}
+        {status === "pending" && <Check className="icon pending" size={13} />}
+        {status === "delivered" && <CheckCheck className="icon delivered" size={13} />}
         {status === "seen" && (
           <motion.div
-            initial={{ opacity: 0.5 }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
+            initial={{ opacity: 0.6 }}
+            animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ repeat: Infinity, duration: 1.8 }}
           >
-            <Eye className="icon seen" size={14} />
+            <Eye className="icon seen" size={13} />
           </motion.div>
         )}
       </motion.div>
@@ -32,41 +32,27 @@ function StatusIcon({ status }) {
 
 export default function MessageBubble({ me, msg }) {
   const formattedTime = new Date(msg.created_at).toLocaleTimeString([], {
-  hour: "2-digit",
-  minute: "2-digit",
-});
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
-    <div className={`bubble-wrap ${me ? "me" : ""}`}>
-    <motion.div
-      className={`message-bubble ${me ? "me" : ""}`}
-      initial={{
-        opacity: 0,
-        y: 25,
-        scale: 0.9
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        x: 0,
-        scale: 1
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 260,
-        damping: 28,
-        mass: 0.5
-      }}
-    >
-      
-        <div className="sender">{msg.sender}</div>
+    <div className={`bubble-wrap ${me ? "me" : "other"}`}>
+      <motion.div
+        className={`message-bubble ${me ? "me" : "other"}`}
+        initial={{ opacity: 0, y: 25, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.5 }}
+      >
+        {!me && <div className="sender">{msg.sender}</div>}
         <div className="body">{msg.body}</div>
-        <div className="time">{new Date(msg.created_at).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</div>
-          
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+
+        {/* ✅ Small time + icon side by side */}
+        <div className="meta">
+          <span className="time">{formattedTime}</span>
           <StatusIcon status={msg.status} />
-        </motion.div>
-        </motion.div>  
-      </div>  
-    
+        </div>
+      </motion.div>
+    </div>
   );
 }
