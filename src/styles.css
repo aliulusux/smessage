@@ -36,7 +36,7 @@ body[data-theme="sunset"] {
   --brand2:#f97316; 
   --text-color: #fff;
   --input-glow: #ff9966;
-  --theme-accent: linear-gradient(-60deg, #ff6f00 0%, #f0981930 100%);;
+  --theme-accent: linear-gradient(to right, #f9d42331 0%, #ff4e5141 100%);
 }
 
 body[data-theme="neon"] { 
