@@ -21,7 +21,7 @@ body[data-theme="light"] {
   --ring:#6366f1;
   --text-color: #222;
   --input-glow: #a4b5ff;
-  --theme-accent: linear-gradient(to right, #434343 0%, black 100%);
+  --theme-accent: linear-gradient(to top, #09203f30 0%, #53789530 100%);;
 }
 
 body[data-theme="dark"] { 
