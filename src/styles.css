@@ -694,8 +694,7 @@ input, select {
   border-radius: 50%;
   padding: 8px 12px;
   backdrop-filter: blur(10px);
-  background: var(--theme-accent, #00c6ff);
-  box-shadow: 0 0 8px var(--theme-accent, #00c6ff);
+
 }
 
 .typing-glass span {
