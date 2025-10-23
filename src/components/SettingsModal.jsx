@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import "../styles.css";
 import GlassSelect, { THEME_SWATCH } from "./GlassSelect.jsx";
-import { motion, AnimatePresence } from "framer-motion";
 import { settings } from "../state/settingsStore";
 
 export default function SettingsModal({ open, onClose }) {
