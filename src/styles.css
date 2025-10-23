@@ -31,7 +31,7 @@ body[data-theme="dark"] {
 }
 
 body[data-theme="sunset"] { 
-  --bg: linear-gradient(180deg, #fb7185, #f97316); 
+  --bg: linear-gradient(180deg,#351f13,#0f172a); 
   --brand1:#fb7185; 
   --brand2:#f97316; 
   --text-color: #fff;
@@ -50,7 +50,7 @@ body[data-theme="neon"] {
 }
 body[data-theme="amethyst"] { 
   --bg: linear-gradient(180deg,#2a1335,#0f172a); 
-  --card:linear-gradient(180deg, rgba(178,0,184,1), rgba(71,0,159,1)); 
+  --card:#fff; 
   --text:#ffffff; 
   --muted:#667085; 
   --brand1:rgba(178,0,184,1); 
