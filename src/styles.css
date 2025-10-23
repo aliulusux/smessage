@@ -36,7 +36,7 @@ body[data-theme="sunset"] {
   --brand2:#f97316; 
   --text-color: #fff;
   --input-glow: #ff9966;
-  --theme-accent: radial-gradient( circle farthest-corner at -1.2% 43.9%,  rgba(252,146,32,1) 16.1%, rgba(255,4,4,1) 74.3% );
+  --theme-accent: radial-gradient( rgba(252,146,32,1) 16.1%, rgba(255,4,4,1) 74.3% );
 }
 
 body[data-theme="neon"] { 
