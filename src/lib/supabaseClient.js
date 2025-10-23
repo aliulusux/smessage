@@ -44,13 +44,32 @@ export async function listMessages(channel_id, limit = 200) {
 }
 
 export async function sendMessage({ channel_id, sender, body }) {
-  const { data, error } = await supabase
-    .from("messages")
-    .insert({ channel_id, sender, body })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  try {
+    // local optimistic insert
+    const tempId = Date.now();
+    const localMessage = {
+      id: tempId,
+      channel_id,
+      sender,
+      body,
+      created_at: new Date().toISOString(),
+      status: "pending",
+    };
+
+    // insert to supabase
+    const { data, error } = await supabase
+      .from("messages")
+      .insert([{ channel_id, sender, body, status: "delivered" }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return { ...data, tempId };
+  } catch (err) {
+    console.error("sendMessage error:", err);
+    return null;
+  }
 }
 
 // realtime table subscription

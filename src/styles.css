@@ -581,3 +581,26 @@ input, select {
         box-shadow: 0 0 15px 8px rgba(0, 255, 42, 0);
     }
 }
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.icon {
+  vertical-align: middle;
+}
+
+.icon.pending {
+  color: #888;
+}
+.icon.delivered {
+  color: #00b3ff;
+}
+.icon.seen {
+  color: #64ffda;
+}
