@@ -21,7 +21,7 @@ body[data-theme="light"] {
   --ring:#6366f1;
   --text-color: #222;
   --input-glow: #a4b5ff;
-  --theme-accent: linear-gradient(to right, #bbd2c530, #53697630, #292e4930);
+  --theme-accent: linear-gradient(to right, #434343 0%, black 100%);
 }
 
 body[data-theme="dark"] { 
@@ -804,6 +804,7 @@ input, select {
 
 .bubble-wrap.other {
   justify-content: flex-start;
+  background: var(--theme-accent, rgba(255,255,255,025));
 }
 
 .message-bubble {
