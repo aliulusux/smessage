@@ -36,19 +36,31 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     const updateUsers = () => {
       const state = ch.presenceState();
       const names = Object.keys(state || {});
-      setUsers(names.sort((a,b)=>a.localeCompare(b)));
+      setUsers(names.sort((a, b) => a.localeCompare(b)));
     };
+
+    // 🔹 When users join/leave
     ch.on("presence", { event: "sync" }, updateUsers);
 
+    // 🔹 When users leave or disconnect
+    ch.on("presence", { event: "leave" }, updateUsers);
+    ch.on("presence", { event: "join" }, updateUsers);
+
+    // 🔹 Typing indicator broadcast
     ch.on("broadcast", { event: "typing" }, ({ payload }) => {
       const name = payload.user;
       if (name === username) return;
       setTyping((t) => Array.from(new Set([...t, name])));
-      setTimeout(() => setTyping((t) => t.filter(n => n !== name)), 1500);
+      setTimeout(() => setTyping((t) => t.filter((n) => n !== name)), 1500);
     });
 
-    window.addEventListener("pagehide", () => ch.untrack());
-    return () => { ch.untrack(); };
+    // ✅ Proper cleanup
+    return () => {
+      ch.untrack();
+      supabase.removeChannel(ch);
+      window.removeEventListener("beforeunload", ch.untrack);
+      window.removeEventListener("pagehide", ch.untrack);
+    };
   }, [channel.id, username]);
 
   const handleSend = async (text) => {

@@ -54,31 +54,56 @@ export async function sendMessage({ channel_id, sender, body }) {
 }
 
 // realtime table subscription
-export function subscribeMessages(channel_id, onInsert) {
-  const channel = supabase.channel(`messages:${channel_id}`);
-  channel.on(
-    "postgres_changes",
-    { event: "INSERT", schema: "public", table: "messages", filter: `channel_id=eq.${channel_id}` },
-    payload => onInsert(payload.new)
-  ).subscribe();
-  return () => supabase.removeChannel(channel);
+export function subscribeMessages(channelId, onMessage) {
+  const channel = supabase
+    .channel(`realtime:messages:${channelId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+        filter: `channel_id=eq.${channelId}`,
+      },
+      (payload) => {
+        onMessage(payload.new);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
 
-// Presence (no DB rows)
-export function presenceChannel(room, user) {
-  const ch = supabase.channel(`presence:${room}`, { config: { presence: { key: user } } });
-
-  ch.on("presence", { event: "sync" }, () => {
-    /* noop; consumer reads via ch.presenceState() */
+// ✅ Presence Channel: handles join/leave + typing signals
+export function presenceChannel(channelId, username) {
+  const channel = supabase.channel(channelId, {
+    config: {
+      presence: {
+        key: username,
+      },
+    },
   });
 
-  ch.on("broadcast", { event: "typing" }, ({ payload }) => {
-    /* consumer handles in component by binding onBroadcast */
+  // Join the presence channel
+  channel.subscribe(async (status) => {
+    if (status === "SUBSCRIBED") {
+      await channel.track({
+        username,
+        last_active: new Date().toISOString(),
+      });
+    }
   });
 
-  ch.subscribe(async (status) => {
-    if (status === "SUBSCRIBED") await ch.track({ online_at: new Date().toISOString() });
-  });
+  // Auto-remove on close/unload (ensures ghost users disappear)
+  const cleanup = () => {
+    channel.untrack();
+    supabase.removeChannel(channel);
+  };
+  window.addEventListener("beforeunload", cleanup);
+  window.addEventListener("pagehide", cleanup);
 
-  return ch;
+  // Return the channel object (so Chat.jsx can attach handlers)
+  return channel;
 }
