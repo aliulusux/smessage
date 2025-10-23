@@ -65,7 +65,7 @@ export default function MessageBubble({ me, msg }) {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <StatusIcon status={msg.status} />
         </motion.div>
-      </motion.div>
-    </div>
+      </div>  
+    </motion.div>  
   );
 }
