@@ -800,7 +800,9 @@ input, select {
 }
 
 .bubble-wrap.me {
-  justify-content: flex-end;
+  background: linear-gradient(135deg, var(--input-glow), rgba(255,255,255,0.05));
+  color: var(--text-color);
+  border-bottom-right-radius: 6px;
 }
 
 .bubble-wrap.other {
