@@ -608,7 +608,7 @@ input, select {
   color: #888;
 }
 .icon.delivered {
-  color: #00b3ff;
+  color: var(--text-color);
 }
 .icon.seen {
   color: var(--text-color);
