@@ -188,6 +188,7 @@ input, select {
   flex:1; 
   background: var(--theme-accent, rgba(255,255,255,0,09));
   box-shadow: 0 0 8px var(--input-glow);
+}  
 .inputbar button { min-width: 100px; }
 
 .inputbar input::placeholder{
