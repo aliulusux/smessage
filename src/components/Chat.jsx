@@ -5,6 +5,7 @@ import MessageInput from "./MessageInput.jsx";
 import MessageBubble from "./MessageBubble.jsx";
 import { supabase, listMessages, sendMessage, subscribeMessages, presenceChannel } from "../lib/supabaseClient";
 import { motion } from "framer-motion";
+import TypingIndicator from "@/components/TypingIndicator";
 
 export default function Chat({ username, channel, onBack, onLogout }) {
   const [msgs, setMsgs] = useState([]);
@@ -99,9 +100,7 @@ export default function Chat({ username, channel, onBack, onLogout }) {
               <MessageBubble key={m.id} me={m.sender===username} msg={m} />
             ))}
 
-            {typing.length > 0 && (
-              <TypingIndicator />
-            )}
+            {typing.length > 0 && <TypingIndicator />}
           </div>
           <MessageInput
             onSend={handleSend}
