@@ -60,6 +60,11 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     };
   }, [channel.id, username]);
 
+  useEffect(() => {
+    listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs]);
+
+
   const handleSend = async (text) => {
     await sendMessage({ channel_id: channel.id, sender: username, body: text });
   };

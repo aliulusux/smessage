@@ -16,7 +16,15 @@ function StatusIcon({ status }) {
       >
         {status === "pending" && <Check className="icon pending" size={14} />}
         {status === "delivered" && <CheckCheck className="icon delivered" size={14} />}
-        {status === "seen" && <Eye className="icon seen" size={14} />}
+        {status === "seen" && (
+          <motion.div
+            initial={{ opacity: 0.5 }}
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ repeat: Infinity, duration: 1.8 }}
+          >
+            <Eye className="icon seen" size={14} />
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
@@ -28,6 +36,27 @@ export default function MessageBubble({ me, msg }) {
   minute: "2-digit",
 });
   return (
+    <motion.div
+      className={`message-bubble ${me ? "me" : ""}`}
+      initial={{
+        opacity: 0,
+        y: 25,
+        x: me ? 20 : -20,
+        scale: 0.9
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        x: 0,
+        scale: 1
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 420,
+        damping: 28,
+        mass: 0.5
+      }}
+    >
     <div className={`bubble ${me ? "me" : ""}`}>
       <div className="sender">{msg.sender}</div>
       <div className="body">{msg.body}</div>

@@ -16,6 +16,14 @@ export default function MessageInput({ onSend, onTyping }) {
     setText("");
     ref.current?.focus();
   };
+  
+  function TypingIndicator() {
+  return (
+    <div className="typing-indicator">
+      <span></span><span></span><span></span>
+    </div>
+  );
+}
 
   return (
     <div className="inputbar">
