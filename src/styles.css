@@ -611,7 +611,7 @@ input, select {
   color: #00b3ff;
 }
 .icon.seen {
-  color: #64ffda;
+  color: var(--text-color);
 }
 
 .message-bubble {
