@@ -3,16 +3,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import "../styles.css";
 import GlassSelect, { THEME_SWATCH } from "./GlassSelect.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import GlassSelect, { THEME_SWATCH } from "./GlassSelect.jsx";
 import { settings } from "../state/settingsStore";
 
 export default function SettingsModal({ open, onClose }) {
   const [theme, setTheme] = useState("ocean");
   const [fontSize, setFontSize] = useState(16);
   const [fontFamily, setFontFamily] = useState("Inter");
-  const s = settings.use();
-  const set = settings.set;
-  const [closing, setClosing] = useState(false);
   const s = settings.use();
   const set = settings.set;
   const [closing, setClosing] = useState(false);
