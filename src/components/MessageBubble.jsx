@@ -9,6 +9,10 @@ function StatusIcon({ status }) {
 }
 
 export default function MessageBubble({ me, msg }) {
+  const formattedTime = new Date(msg.created_at).toLocaleTimeString([], {
+  hour: "2-digit",
+  minute: "2-digit",
+});
   return (
     <div className={`bubble ${me ? "me" : ""}`}>
       <div className="sender">{msg.sender}</div>

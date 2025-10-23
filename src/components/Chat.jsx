@@ -3,10 +3,7 @@ import Header from "./Header.jsx";
 import UserList from "./UserList.jsx";
 import MessageInput from "./MessageInput.jsx";
 import MessageBubble from "./MessageBubble.jsx";
-import {
-  listMessages, sendMessage, subscribeMessages,
-  presenceChannel
-} from "../lib/supabaseClient";
+import { supabase, listMessages, sendMessage, subscribeMessages, presenceChannel } from "../lib/supabaseClient";
 import { motion } from "framer-motion";
 
 export default function Chat({ username, channel, onBack, onLogout }) {
