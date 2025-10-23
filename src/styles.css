@@ -79,6 +79,7 @@ body[data-theme="iced"] {
   --brand2:rgba(79,255,255,1); 
   --text-color: #fff;
   --input-glow: #8fd7ff;
+  
   --theme-accent: linear-gradient(180deg, rgba(0,213,255,1), rgba(79,255,255,1));
 }
 
