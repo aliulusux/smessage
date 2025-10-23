@@ -79,17 +79,17 @@ body[data-theme="iced"] {
   --brand2:rgba(79,255,255,1); 
   --text-color: #fff;
   --input-glow: #8fd7ff;
-  
   --theme-accent: linear-gradient(180deg, rgba(0,213,255,1), rgba(79,255,255,1));
 }
 
 body[data-theme="ocean"] { 
   --bg: linear-gradient(180deg,#051622,#09354a); 
-  --brand1:#22d3ee; 
-  --brand2:#38bdf8; 
+  --brand1:rgba(0,119,182,1); 
+  --brand2:rgba(8,24,68,1); 
   --text-color: #fff;
-  --input-glow: #00bfff;
-  --theme-accent: radial-gradient(circle,rgba(214, 214, 214, 0.49) 0%, rgba(0, 136, 255, 0.022) 38%, rgba(0, 30, 255, 0.44) 66%, rgba(214, 214, 214, 0.48) 100%);
+  --input-glow: rgba(0,119,182,1);
+  --theme-accent: linear-gradient(86.3deg, rgba(0,119,182,1), rgba(8,24,68,1));
+  /*background-image: linear-gradient( 86.3deg,  rgba(0,119,182,1) 3.6%, rgba(8,24,68,1) 87.6% );*/
 }
 
 body[data-theme="forest"] { 
