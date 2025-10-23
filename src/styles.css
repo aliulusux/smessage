@@ -88,7 +88,7 @@ body[data-theme="ocean"] {
   --brand2:rgba(8,24,68,1); 
   --text-color: #fff;
   --input-glow: rgba(0,119,182,1);
-  --theme-accent: linear-gradient(86.3deg, rgba(0,119,182,1), rgba(8,24,68,1));
+  --theme-accent: linear-gradient(180deg, rgba(0,119,182,1), rgba(8,24,68,1));
   /*background-image: linear-gradient( 86.3deg,  rgba(0,119,182,1) 3.6%, rgba(8,24,68,1) 87.6% );*/
 }
 
@@ -98,7 +98,7 @@ body[data-theme="forest"] {
   --brand2:#86efac; 
   --text-color: #eaffea;
   --input-glow: #66cc99;
-  --theme-accent: radial-gradient(circle,rgba(214, 214, 214, 0.49) 0%, rgba(0, 255, 8, 0.022) 38%, rgba(0, 255, 106, 0.44) 66%, rgba(214, 214, 214, 0.48) 100%);
+  --theme-accent: linear-gradient(86.3deg, #34d399, #86efac);
 }
 body[data-theme="sand"] { 
   --bg: linear-gradient(180deg,#fef6e4,#fff); 
