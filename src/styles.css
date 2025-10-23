@@ -31,7 +31,7 @@ body[data-theme="dark"] {
 }
 
 body[data-theme="sunset"] { 
-  --bg: linear-gradient(180deg,#351f13,#0f172a); 
+  --bg: linear-gradient(180deg,#ffa162a6,#0f172a); 
   --brand1:#fb7185; 
   --brand2:#f97316; 
   --text-color: #fff;
