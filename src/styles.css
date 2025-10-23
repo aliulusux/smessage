@@ -27,7 +27,7 @@ body[data-theme="light"] {
 body[data-theme="dark"] { 
   --text-color: #fff;
   --input-glow: #00c6ff;
-  --theme-accent: radial-gradient(circle,rgba(122, 119, 119, 1) 0%, rgba(69, 69, 69, 0.022) 22%, rgba(69, 69, 69, 1) 78%, rgba(122, 119, 119, 1) 100%);
+  --theme-accent: linear-gradient(135deg, #f5f7fa30 0%, #c3cfe230 100%);
 }
 
 body[data-theme="sunset"] { 
