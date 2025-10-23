@@ -634,7 +634,6 @@ input, select {
 
 .message-bubble.me {
   align-self: flex-end;
-  background: linear-gradient(135deg, #00c6ff, #0072ff);
   color: white;
 }
 
