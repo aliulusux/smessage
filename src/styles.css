@@ -49,15 +49,15 @@ body[data-theme="neon"] {
   --theme-accent: linear-gradient(180deg, rgba(236,24,36,1), rgba(249,101,230,1));
 }
 body[data-theme="amethyst"] { 
-  --bg: linear-gradient(180deg,#f5f3ff,#fbf2fd); 
+  --bg: linear-gradient(180deg, rgba(178,0,184,1), rgba(71,0,159,1)); 
   --card:#fff; 
   --text:#ffffff; 
   --muted:#667085; 
-  --brand1:#9021ff; 
-  --brand2:#2748ff;
+  --brand1:rgba(178,0,184,1); 
+  --brand2:rgba(71,0,159,1);
   --text-color: #fff;
-  --input-glow: #b184ff;
-  --theme-accent: radial-gradient(circle,rgba(214, 214, 214, 0.49) 0%, rgba(157, 0, 255, 0.022) 38%, rgba(213, 0, 255, 0.44) 66%, rgba(214, 214, 214, 0.48) 100%);
+  --input-glow: linear-gradient(180deg, rgba(178,0,184,1), rgba(71,0,159,1));
+  --theme-accent: linear-gradient(180deg, rgba(178,0,184,1), rgba(71,0,159,1));
 }
 
 body[data-theme="pastel"] { 
