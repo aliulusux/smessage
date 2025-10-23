@@ -108,7 +108,7 @@ input, select {
 .bubble .time { font-size:.74em; opacity:.7; margin-top:4px; }
 
 .inputbar { display:flex; gap:10px;border: 2px solid var(--bg);box-shadow: 0 1px 5px rgba(255, 255, 255, 0.025)}
-.inputbar input { flex:1; }
+.inputbar input { flex:1; border: 2px solid var(--bg);box-shadow: 0 1px 5px rgba(255, 255, 255, 0.025)}
 .inputbar button { min-width: 100px; }
 
 .users { background: color-mix(in oklab, var(--card) 92%, transparent); border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden; }
@@ -705,4 +705,6 @@ input, select {
   background: rgba(255, 255, 255, 0.9);
 }
 
-
+MessageInput {
+  border: 2px solid var(--bg);box-shadow: 0 1px 5px rgba(255, 255, 255, 0.025)
+}
