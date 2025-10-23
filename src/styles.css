@@ -9,18 +9,96 @@
   --brand1: #a78bfa;
   --brand2: #60a5fa;
   --ring: #7c3aed;
+  --text-color: #fff;
+  --input-glow: #00c6ff;
 }
 
-body[data-theme="light"] { --bg: linear-gradient(180deg,#eef2ff,#fafafa); --card:#fff; --text:#12141a; --muted:#75809a; --ring:#6366f1; }
-body[data-theme="dark"] { }
-body[data-theme="sunset"] { --bg: linear-gradient(180deg,#2a1335,#0f172a); --brand1:#fb7185; --brand2:#f97316; }
-body[data-theme="neon"] { --bg: linear-gradient(180deg,#0f1020,#030712); --brand1:#22d3ee; --brand2:#a78bfa; --ring:#06b6d4; }
-body[data-theme="amethyst"] { }
-body[data-theme="pastel"] { --bg: linear-gradient(180deg,#f5f3ff,#fdf2f8); --card:#fff; --text:#222; --muted:#667085; --brand1:#c084fc; --brand2:#f472b6; }
-body[data-theme="iced"] { --bg: linear-gradient(180deg,#0b1220,#0b1725); --brand1:#93c5fd; --brand2:#67e8f9; }
-body[data-theme="ocean"] { --bg: linear-gradient(180deg,#051622,#09354a); --brand1:#22d3ee; --brand2:#38bdf8; }
-body[data-theme="forest"] { --bg: linear-gradient(180deg,#0a1a12,#0e2820); --brand1:#34d399; --brand2:#86efac; }
-body[data-theme="sand"] { --bg: linear-gradient(180deg,#fef6e4,#fff); --card:#fff; --text:#2c2c2c; --muted:#6b7280; --brand1:#f59e0b; --brand2:#f97316; }
+body[data-theme="light"] { 
+  --bg: linear-gradient(180deg,#eef2ff,#fafafa); 
+  --card:#fff; 
+  --text:#12141a; 
+  --muted:#75809a; 
+  --ring:#6366f1;
+  --text-color: #222;
+  --input-glow: #a4b5ff; 
+}
+
+body[data-theme="dark"] { 
+  --text-color: #fff;
+  --input-glow: #00c6ff;
+}
+
+body[data-theme="sunset"] { 
+  --bg: linear-gradient(180deg,#2a1335,#0f172a); 
+  --brand1:#fb7185; 
+  --brand2:#f97316; 
+  --text-color: #fff;
+  --input-glow: #ff9966;
+}
+
+body[data-theme="neon"] { 
+  --bg: linear-gradient(180deg,#0f1020,#030712); 
+  --brand1:#22d3ee; 
+  --brand2:#a78bfa; 
+  --ring:#06b6d4; 
+  --text-color: #fff;
+  --input-glow: #00ffff;
+}
+body[data-theme="amethyst"] { 
+  --bg: linear-gradient(180deg,#f5f3ff,#fbf2fd); 
+  --card:#fff; 
+  --text:#ffffff; 
+  --muted:#667085; 
+  --brand1:#9021ff; 
+  --brand2:#2748ff;
+  --text-color: #fff;
+  --input-glow: #b184ff;
+}
+
+body[data-theme="pastel"] { 
+  --bg: linear-gradient(180deg,#f5f3ff,#fdf2f8); 
+  --card:#fff; 
+  --text:#222; 
+  --muted:#667085; 
+  --brand1:#c084fc; 
+  --brand2:#f472b6; 
+  --text-color: #333;
+  --input-glow: #b7c8ff;
+}
+
+body[data-theme="iced"] { 
+  --bg: linear-gradient(180deg,#0b1220,#0b1725); 
+  --brand1:#93c5fd; 
+  --brand2:#67e8f9; 
+  --text-color: #222;
+  --input-glow: #8fd7ff;
+}
+
+body[data-theme="ocean"] { 
+  --bg: linear-gradient(180deg,#051622,#09354a); 
+  --brand1:#22d3ee; 
+  --brand2:#38bdf8; 
+  --text-color: #fff;
+  --input-glow: #00bfff;
+}
+
+body[data-theme="forest"] { 
+  --bg: linear-gradient(180deg,#0a1a12,#0e2820); 
+  --brand1:#34d399; 
+  --brand2:#86efac; 
+  --text-color: #eaffea;
+  --input-glow: #66cc99;
+}
+body[data-theme="sand"] { 
+  --bg: linear-gradient(180deg,#fef6e4,#fff); 
+  --card:#fff; 
+  --text:#2c2c2c; 
+  --muted:#6b7280; 
+  --brand1:#f59e0b; 
+  --brand2:#f97316; 
+  --text-color: #222;
+  --input-glow: #f2c572;
+}
 
 * { box-sizing: border-box; }
 html, body, #root, .app-wrap { height: 100%; }
@@ -105,8 +183,20 @@ input, select {
 .bubble .time { font-size:.74em; opacity:.7; margin-top:4px; }
 
 .inputbar { display:flex; gap:10px;border: 2px solid var(--bg);box-shadow: 0 1px 5px rgba(255, 255, 255, 0.025)}
-.inputbar input { flex:1; background: var(--theme-accent, rgba(255,255,255,0,09));box-shadow: 0 0 8px var(--theme-accent, #00c6ff);}
+.inputbar input { 
+  color: var(--text-color);
+  flex:1; 
+  background: var(--theme-accent, rgba(255,255,255,0,09));
+  box-shadow: 0 0 8px var(--input-glow);
 .inputbar button { min-width: 100px; }
+
+.inputbar input::placeholder{
+  color: rgba(var(--text-color), 0.5);
+}
+.inputbar input:focus {
+  box-shadow: 0 0 12px var(--input-glow);
+  border-color: var(--input-glow);
+}
 
 .users { background: color-mix(in oklab, var(--card) 92%, transparent); border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden; }
 .users-head { padding:12px; font-weight:700; border-bottom:1px solid rgba(255,255,255,.06); }
@@ -618,7 +708,7 @@ input, select {
   margin: 2px 0;
   word-wrap: break-word;
   line-height: 1.4;
-  color: var(--text-color, #fff);
+  color: var(--text-color);
   animation: fadeInMessage 0.25s ease;
   transform-origin: bottom;
   transition: all 0.2s ease-in-out;
@@ -700,10 +790,6 @@ input, select {
   height: 6px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
-}
-
-MessageInput {
-  border: 2px solid var(--bg);box-shadow: 0 1px 5px rgba(255, 255, 255, 0.025)
 }
 
 .bubble-wrap {
