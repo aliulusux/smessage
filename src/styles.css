@@ -31,7 +31,7 @@ body[data-theme="dark"] {
 }
 
 body[data-theme="sunset"] { 
-  --bg: linear-gradient(-180deg,#f97316,#0f172a); 
+  --bg: linear-gradient(180deg,#051622,#4a2d09); 
   --brand1:#fb7185; 
   --brand2:#f97316; 
   --text-color: #fff;
@@ -49,7 +49,7 @@ body[data-theme="neon"] {
   --theme-accent: linear-gradient(180deg, rgba(236,24,36,1), rgba(249,101,230,1));
 }
 body[data-theme="amethyst"] { 
-  --bg: linear-gradient(180deg,#2a1335,#0f172a); 
+  --bg: linear-gradient(180deg,#051622,rgb(36, 15, 42)); 
   --card:#fff; 
   --text:#ffffff; 
   --muted:#667085; 
@@ -61,7 +61,7 @@ body[data-theme="amethyst"] {
 }
 
 body[data-theme="pastel"] { 
-  --bg: linear-gradient(180deg,#f5f3ff,#fdf2f8); 
+  --bg: linear-gradient(180deg,#f5f3ff,#ffc5e5); 
   --card:#fff; 
   --text:#222; 
   --muted:#667085; 
