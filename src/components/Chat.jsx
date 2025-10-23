@@ -95,7 +95,13 @@ export default function Chat({ username, channel, onBack, onLogout }) {
             {channel.is_private && <span className="lock">🔒 private</span>}
           </div>
           <div className="messages" ref={listRef}>
-            {msgs.map(m => <MessageBubble key={m.id} me={m.sender===username} msg={m} />)}
+            {msgs.map(m => (
+              <MessageBubble key={m.id} me={m.sender===username} msg={m} />
+            ))}
+
+            {typing.length > 0 && (
+              <TypingIndicator />
+            )}
           </div>
           <MessageInput
             onSend={handleSend}
