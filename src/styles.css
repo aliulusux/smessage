@@ -46,8 +46,7 @@ body[data-theme="neon"] {
   --ring:#06b6d4; 
   --text-color: #fff;
   --input-glow: #00ffff;
-  background-image: radial-gradient( circle farthest-corner at 10% 20%,  rgba(236,24,36,1) 0%, rgba(249,101,230,1) 81% );
-  --theme-accent: linear-gradient(-180deg, rgba(236,24,36,1) 49%, rgba(249,101,230,1) 49%,);
+  --theme-accent: linear-gradient(180deg, rgba(236,24,36,1) 49%, rgba(249,101,230,1) 49%);
 }
 body[data-theme="amethyst"] { 
   --bg: linear-gradient(180deg,#f5f3ff,#fbf2fd); 
