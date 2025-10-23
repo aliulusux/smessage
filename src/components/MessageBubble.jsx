@@ -57,13 +57,14 @@ export default function MessageBubble({ me, msg }) {
         mass: 0.5
       }}
     >
-    <div className={`bubble ${me ? "me" : ""}`}>
-      <div className="sender">{msg.sender}</div>
-      <div className="body">{msg.body}</div>
-      <div className="time">{new Date(msg.created_at).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</div>
-        <span className="time">{formattedTime}</span>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-        <StatusIcon status={msg.status} />
+      <div className={`bubble ${me ? "me" : ""}`}>
+        <div className="sender">{msg.sender}</div>
+        <div className="body">{msg.body}</div>
+        <div className="time">{new Date(msg.created_at).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}</div>
+          <span className="time">{formattedTime}</span>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <StatusIcon status={msg.status} />
+        </motion.div>
       </motion.div>
     </div>
   );
