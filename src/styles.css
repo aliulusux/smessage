@@ -21,7 +21,7 @@ body[data-theme="light"] {
   --ring:#6366f1;
   --text-color: #222;
   --input-glow: #a4b5ff;
-  --theme-accent: linear-gradient(to top, #09203f30 0%, #53789530 100%);;
+  --theme-accent: linear-gradient(to top, #09203f30 0%, rgba(153,202,251,1));
 }
 
 body[data-theme="dark"] { 
@@ -105,11 +105,11 @@ body[data-theme="sand"] {
   --card:#fff; 
   --text:#2c2c2c; 
   --muted:#6b7280; 
-  --brand1:#f59e0b; 
-  --brand2:#f97316; 
+  --brand1:/*#f59e0b*/ rgba(255,244,169,1); 
+  --brand2:/*#f97316*/ rgba(255,244,234,1); 
   --text-color: #222;
   --input-glow: #f2c572;
-  --theme-accent: radial-gradient(circle,rgba(214, 214, 214, 0.49) 0%, rgba(255, 225, 0, 0.022) 38%, rgba(255, 247, 0, 0.44) 66%, rgba(214, 214, 214, 0.48) 100%);
+  --theme-accent: linear-gradient(86.3deg, rgba(255,244,169,1), rgba(255,244,234,1));
 }
 
 * { box-sizing: border-box; }
