@@ -1,6 +1,6 @@
 import React from "react";
 import "../styles.css";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Check, CheckCheck, Eye } from "lucide-react";
 
 function StatusIcon({ status }) {
