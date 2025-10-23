@@ -1,6 +1,21 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+<<<<<<< HEAD
+// theme swatches (used for little dots)
+export const THEME_SWATCH = {
+  sunset: "linear-gradient(135deg,#ff9966,#ff5e62)",
+  neon: "linear-gradient(135deg,#00ffe0,#0078ff)",
+  dark: "linear-gradient(135deg,#0f1115,#2c2f37)",
+  light: "linear-gradient(135deg,#fafafa,#dcdfe4)",
+  amethyst: "linear-gradient(135deg,#9D50BB,#6E48AA)",
+  pastel: "linear-gradient(135deg,#fbc2eb,#a6c1ee)",
+  iced: "linear-gradient(135deg,#a1c4fd,#c2e9fb)",
+  ocean: "linear-gradient(135deg,#2E3192,#1BFFFF)",
+  forest: "linear-gradient(135deg,#134E5E,#71B280)",
+  sand: "linear-gradient(135deg,#FBD786,#f7797d)",
+};
+=======
 export const THEME_SWATCH = {
   sunset: "linear-gradient(135deg, #ff9966, #ff5e62)",
   neon: "linear-gradient(135deg, #00ffe0, #0078ff)",
@@ -13,15 +28,33 @@ export const THEME_SWATCH = {
   forest: "linear-gradient(135deg, #134E5E, #71B280)",
   sand: "linear-gradient(135deg, #FBD786, #f7797d)"
 };  
+>>>>>>> 0388e7076ac62fbf0e25d57ff2cfdd9643be8afb
 
+<<<<<<< HEAD
+export default function GlassSelect({
+  value,
+  onChange,
+  options,
+  labelRender,              // optional label formatter
+  showDot = true,           // show colored dot
+}) {
+=======
 export default function GlassSelect({ value, onChange, options, labelRender, showDot=true, }) {
+>>>>>>> 0388e7076ac62fbf0e25d57ff2cfdd9643be8afb
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
+<<<<<<< HEAD
+  const menuRef = useRef(null);
+  const [menuStyle, setMenuStyle] = useState({});
+
+  const label = labelRender ? labelRender(value) : value;
+=======
   const menuRef = useRef(null);
   const [menuStyle, setMenuStyle] = useState({});
    
   const label = labelRender ? labelRender(value) : value;
   const toggle = () => setOpen((o) => !o);
+>>>>>>> 0388e7076ac62fbf0e25d57ff2cfdd9643be8afb
 
   // position menu under button
   const placeMenu = () => {
@@ -35,7 +68,6 @@ export default function GlassSelect({ value, onChange, options, labelRender, sho
     });
   };
 
-  // Calculate dropdown position
   useEffect(() => {
     if (!open) return;
     placeMenu();
