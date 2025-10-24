@@ -233,19 +233,18 @@ const handleTyping = () => {
             ))}
           </div>
 
-          {typing.filter((n) => n !== username).length > 0 && (
+          {/* Typing indicator - others only */}
+          {typing.filter(name => name !== username).length > 0 && (
             <div className="typing-bar">
               <TypingIndicator
-                typingUsers={typing.filter((n) => n !== username)}
+                typingUsers={typing.filter(name => name !== username)}
+                currentUser={username}
               />
             </div>
           )}
-          <MessageInput
-            onSend={handleSend}
-            onTyping={handleTyping}
-          />   
-        </div>
-        <UserList users={users} typingUsers={typing} />
+
+          {/* Message input */}
+          <MessageInput onSend={handleSend} onTyping={handleTyping} />
       </div>
     </div>
   );
