@@ -19,10 +19,15 @@ export default function TypingIndicator({ typingUsers = [] }) {
 
   // text logic
   let text = "";
-  if (typingUsers.length === 1) text = `${typingUsers[0]} is typing...`;
-  else if (typingUsers.length === 2)
+  if (typingUsers.length === 1) {
+    text = `${typingUsers[0]} is typing...`;
+  } else if (typingUsers.length === 2) {
     text = `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
-  else text = `Users are typing...`;
+  } else if (typingUsers.length > 2) {
+    text = "Several users are typing...";
+  } else {
+    return null;
+  }
 
   return (
     <AnimatePresence mode="wait">

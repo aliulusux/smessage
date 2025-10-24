@@ -170,8 +170,16 @@ useEffect(() => {
   // 👇 Typing indicator event handler
   ch.on("broadcast", { event: "typing" }, ({ payload }) => {
     const name = payload.user;
-    if (name === username) return; // ignore self
-    setTyping((prev) => Array.from(new Set([...prev, name])));
+    // ignore self and duplicates
+    if (!name || name === username) return;
+
+    setTyping((prev) => {
+      const next = new Set(prev);
+      next.add(name);
+      return Array.from(next);
+    });
+
+    // auto-remove after 1.5 s
     setTimeout(() => {
       setTyping((prev) => prev.filter((n) => n !== name));
     }, 1500);
@@ -223,7 +231,7 @@ const handleTyping = () => {
             ))}
           </div>
 
-          <TypingIndicator typingUsers={typing} />
+          <TypingIndicator typingUsers={typing.filter((n) => n !== username)} />
 
           <MessageInput
             onSend={handleSend}
