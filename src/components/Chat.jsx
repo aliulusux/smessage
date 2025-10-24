@@ -140,34 +140,31 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
-  const sendTyping = async () => {
-    const ch = supabase
-      .getChannels()
-      .find((c) => c.topic === `realtime:room:${channel.id}`);
+ const sendTyping = async () => {
+  const ch = supabase
+    .getChannels()
+    .find((c) => c.topic === `realtime:room:${channel.id}`);
 
-    // wait until subscribed
-    if (!ch || ch.state !== "joined") return;
+  if (!ch || ch.state !== "joined") return;
 
+  ch.send({
+    type: "broadcast",
+    event: "typing",
+    payload: { user: username },
+  });
+};
+
+
+ /* const sendTyping = async () => {
+    const ch = supabase.getChannels().find((c) => c.topic === `realtime:room:${channel.id}`);
+    // if not yet ready (very first keystroke), no-op
+    if (!ch) return;
     ch.send({
       type: "broadcast",
       event: "typing",
       payload: { user: username },
     });
-  };
-
-  const sendTyping = async () => {
-    const ch = supabase
-      .getChannels()
-      .find((c) => c.topic === `realtime:room:${channel.id}`);
-
-    if (!ch || ch.state !== "joined") return;
-
-    ch.send({
-      type: "broadcast",
-      event: "typing",
-      payload: { user: username },
-    });
-  };
+  };*/
 
   return (
     <div className="chat-screen">
