@@ -848,11 +848,11 @@ input, select {
 }
 
 .typing-indicator {
-  font-style: italic;
-  font-size: 0.9rem;
-  color: var(--typing-text-color);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-  margin-bottom: 4px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 10px 0;
+  padding-left: 10px;
 }
 
 .typing-indicator-bottom {
