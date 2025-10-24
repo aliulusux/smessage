@@ -82,7 +82,7 @@ export default function MessageBubble({ me, msg }) {
         hour: "2-digit",
         minute: "2-digit",
       })
-    : "";
+    :  "--:--";
 
   const formattedTime = safeTime || "--:--";
   const body = msg.body || "";
