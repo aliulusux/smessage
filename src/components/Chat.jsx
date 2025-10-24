@@ -152,37 +152,51 @@ useEffect(() => {
   };
 }, [channel.id, username]);
 
-  // presence + typing
-  useEffect(() => {
-    const ch = presenceChannel(channel.id, username);
+// inside your main presence useEffect:
+useEffect(() => {
+  const ch = presenceChannel(channel.id, username);
 
-    const updateUsers = () => {
-      const state = ch.presenceState() || {};
-      const names = Object.keys(state);
-      setUsers(names.sort((a, b) => a.localeCompare(b)));
-    };
+  const updateUsers = () => {
+    const state = ch.presenceState();
+    const names = Object.keys(state || {});
+    setUsers(names.sort((a, b) => a.localeCompare(b)));
+  };
 
-    ch.on("presence", { event: "sync" }, updateUsers);
-    ch.on("presence", { event: "leave" }, updateUsers);
-    ch.on("presence", { event: "join" }, updateUsers);
+  // Sync users
+  ch.on("presence", { event: "sync" }, updateUsers);
+  ch.on("presence", { event: "join" }, updateUsers);
+  ch.on("presence", { event: "leave" }, updateUsers);
 
-    ch.on("broadcast", { event: "typing" }, ({ payload }) => {
-      const name = payload?.user;
-      if (!name || name === username) return;
-      setTyping((t) => Array.from(new Set([...t, name])));
-      setTimeout(() => setTyping((t) => t.filter((n) => n !== name)), 1500);
-    });
+  // 👇 Typing indicator event handler
+  ch.on("broadcast", { event: "typing" }, ({ payload }) => {
+    const name = payload.user;
+    if (name === username) return; // ignore self
+    setTyping((prev) => Array.from(new Set([...prev, name])));
+    setTimeout(() => {
+      setTyping((prev) => prev.filter((n) => n !== name));
+    }, 1500);
+  });
 
-    // cleanup
-    return () => {
-      try {
-        ch.untrack();
-      } catch {}
-      try {
-        supabase.removeChannel(ch);
-      } catch {}
-    };
-  }, [channel.id, username]);
+  // ✅ save the channel reference globally for typing broadcast
+  window.currentPresenceChannel = ch;
+
+  // Cleanup
+  return () => {
+    ch.untrack();
+    supabase.removeChannel(ch);
+  };
+}, [channel.id, username]);
+
+// ⌨️ Send typing signal using the same channel
+const handleTyping = () => {
+  const ch = window.currentPresenceChannel;
+  if (!ch) return;
+  ch.send({
+    type: "broadcast",
+    event: "typing",
+    payload: { user: username },
+  });
+};
 
   // keep autoscroll on new messages (safe)
   useEffect(() => {
@@ -213,7 +227,7 @@ useEffect(() => {
 
           <MessageInput
             onSend={handleSend}
-            onTyping={() => broadcastTyping.current?.()}
+            onTyping={handleTyping}
           />
         </div>
 
