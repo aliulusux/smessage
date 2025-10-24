@@ -151,9 +151,10 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       type: "broadcast",
       event: "typing_start",
       payload: { user: username },
-      self: false, // <- crucial: don't hear our own typing
+      self: false, // prevent seeing own typing
     });
   };
+
   const typingStop = () => {
     const ch = presenceRef.current;
     if (!ch) return;
@@ -192,14 +193,22 @@ export default function Chat({ username, channel, onBack, onLogout }) {
             ))}
           </div>
 
-          {/* only others’ typing */}
-          {typing.length > 0 && (
+          {/* Typing indicator - show only if someone else is typing */}
+          {typing.filter((n) => n !== username).length > 0 && (
             <div className="typing-bar">
-              <TypingIndicator typingUsers={typing} currentUser={username} />
+              <TypingIndicator
+                typingUsers={typing.filter((n) => n !== username)}
+                currentUser={username}
+              />
             </div>
           )}
 
-          <MessageInput onSend={handleSend} onTypingStart={typingStart} onTypingStop={typingStop} />
+          <MessageInput
+            onSend={handleSend}
+            onTypingStart={typingStart}
+            onTypingStop={typingStop}
+          />
+
         </div>
         <UserList users={users} typingUsers={typing} />
       </div>
