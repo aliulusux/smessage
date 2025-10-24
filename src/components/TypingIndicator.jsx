@@ -12,7 +12,6 @@ export default function TypingIndicator({ typingUsers = [] }) {
       ? `${typingUsers.join(", ")} are typing...`
       : "Several people are typing...";
 
-  return (
-    <div className="typing-indicator">{text}</div>;
-  );
+  return <div className="typing-indicator">{text}</div>;
+    
 }
