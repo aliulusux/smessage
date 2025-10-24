@@ -233,18 +233,19 @@ const handleTyping = () => {
           </div>
 
           {typing.filter((n) => n !== username).length > 0 && (
-            <div className="typing-bar">
+            
               <TypingIndicator
                 typingUsers={typing.filter((n) => n !== username)}
               />
-            </div>
+            
           )}
           <MessageInput
             onSend={handleSend}
             onTyping={handleTyping}
           />
 
-        <UserList users={users} typingUsers={typing} />
+          <UserList users={users} typingUsers={typing} />
+        </div>
       </div>
     </div>
   );
