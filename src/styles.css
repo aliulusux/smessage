@@ -820,7 +820,7 @@ input, select {
 
 .typing-text {
   font-style: italic;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .typing-dots {
@@ -866,6 +866,19 @@ input, select {
   width: fit-content;
   pointer-events: none;
   transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.typing-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 6px 8px;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--text-color, #ccc);
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .glass-typing-box {

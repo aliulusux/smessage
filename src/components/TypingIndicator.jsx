@@ -12,13 +12,13 @@ export default function TypingIndicator({ typingUsers = [] }) {
   return (
     <AnimatePresence>
       <motion.div
-        className="glass-typing-box"
-        initial={{ opacity: 0, y: 6 }}
+        className="typing-inline"
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 6 }}
-        transition={{ duration: 0.3 }}
+        exit={{ opacity: 0, y: 4 }}
+        transition={{ duration: 0.25 }}
       >
-        <span>{text}</span>
+        <span className="typing-text">{text}</span>
         <div className="typing-dots">
           <span></span>
           <span></span>
