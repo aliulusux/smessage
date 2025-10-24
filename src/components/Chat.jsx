@@ -114,6 +114,21 @@ useEffect(() => {
 
 // Real typing broadcast (reuse presence channel)
 const broadcastTyping = React.useRef();
+useEffect(() => {
+  const ch = presenceChannel(channel.id + ":typing-signal", username);
+  broadcastTyping.current = (() => {
+    let last = 0;
+    return () => {
+      const now = Date.now();
+      if (now - last > 1000) { // send every 1s max
+        ch.send({ type: "broadcast", event: "typing", payload: { user: username } });
+        last = now;
+      }
+    };
+  })();
+  return () => ch.untrack();
+}, [channel.id, username]);
+
 const broadcastSeen = React.useRef();
 
 useEffect(() => {
@@ -167,24 +182,26 @@ useEffect(() => {
   ch.on("presence", { event: "join" }, updateUsers);
   ch.on("presence", { event: "leave" }, updateUsers);
 
-  // 🔹 Improved typing broadcast logic with smoother fade-out
-  ch.on("broadcast", { event: "typing" }, ({ payload }) => {
-    const name = payload.user;
-    if (!name || name === username) return;
+// ✅ Improved typing persistence logic
+const typingTimers = {};
 
-    setTyping((prev) => {
-      const next = new Set(prev);
-      next.add(name);
-      return Array.from(next);
-    });
+ch.on("broadcast", { event: "typing" }, ({ payload }) => {
+  const name = payload.user;
+  if (!name || name === username) return;
 
-    // reset fade timer per user
-    const key = `typing-${name}`;
-    clearTimeout(window[key]);
-    window[key] = setTimeout(() => {
-      setTyping((prev) => prev.filter((n) => n !== name));
-    }, 2500); // 2.5s ensures smoother fade sync
+  // Add the user if not already present
+  setTyping((prev) => {
+    if (!prev.includes(name)) return [...prev, name];
+    return prev;
   });
+
+  // Reset their removal timer (4 seconds of inactivity)
+  clearTimeout(typingTimers[name]);
+  typingTimers[name] = setTimeout(() => {
+    setTyping((prev) => prev.filter((n) => n !== name));
+    delete typingTimers[name];
+  }, 4000);
+});
 
   // ✅ save the channel reference globally for typing broadcast
   window.currentPresenceChannel = ch;
