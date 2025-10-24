@@ -1,9 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Header from "./Header.jsx";
 import UserList from "./UserList.jsx";
 import MessageInput from "./MessageInput.jsx";
 import MessageBubble from "./MessageBubble.jsx";
-import { supabase, listMessages, sendMessage, subscribeMessages, presenceChannel } from "../lib/supabaseClient";
+import {
+  supabase,
+  listMessages,
+  sendMessage,
+  subscribeMessages,
+  presenceChannel,
+} from "../lib/supabaseClient";
 import { motion } from "framer-motion";
 import TypingIndicator from "./TypingIndicator.jsx";
 
@@ -13,7 +19,7 @@ export default function Chat({ username, channel, onBack, onLogout }) {
   const [typing, setTyping] = useState([]);
   const listRef = useRef(null);
 
-  // ✅ load chat history
+  /* ---------------------- Load History ---------------------- */
   useEffect(() => {
     (async () => {
       if (channel?.id) {
@@ -23,17 +29,43 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     })();
   }, [channel?.id]);
 
-  // ✅ realtime messages subscription
+  /* ---------------------- Realtime Messages ---------------------- */
   useEffect(() => {
     if (!channel?.id) return;
+
     const unsub = subscribeMessages(channel.id, (row) => {
       setMsgs((m) => [...m, row]);
       listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
     });
-    return () => unsub && unsub();
+
+    // ✅ Listen for realtime updates (seen status etc.)
+    const updateSub = supabase
+      .channel(`messages-updates-${channel.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `channel_id=eq.${channel.id}`,
+        },
+        (payload) => {
+          setMsgs((prev) =>
+            prev.map((m) =>
+              m.id === payload.new.id ? { ...m, ...payload.new } : m
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      unsub && unsub();
+      supabase.removeChannel(updateSub);
+    };
   }, [channel?.id]);
 
-  // ✅ mark messages as seen when received or updated
+  /* ---------------------- Mark Seen Logic ---------------------- */
   useEffect(() => {
     if (!channel?.id || !username) return;
 
@@ -41,6 +73,7 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       try {
         const unseen = msgs.filter((m) => !m.seen && m.sender !== username);
         if (unseen.length === 0) return;
+
         const ids = unseen.map((m) => m.id);
 
         await supabase
@@ -48,7 +81,6 @@ export default function Chat({ username, channel, onBack, onLogout }) {
           .update({ seen: true, status: "seen" })
           .in("id", ids)
           .eq("channel_id", channel.id);
-
       } catch (err) {
         console.error("Error marking messages as seen:", err.message);
       }
@@ -57,7 +89,7 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     markSeen();
   }, [msgs, username, channel?.id]);
 
-  // ✅ presence + typing
+  /* ---------------------- Presence + Typing ---------------------- */
   useEffect(() => {
     if (!channel?.id || !username) return;
 
@@ -69,12 +101,10 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       setUsers(names.sort((a, b) => a.localeCompare(b)));
     };
 
-    // Presence tracking
     ch.on("presence", { event: "sync" }, updateUsers);
     ch.on("presence", { event: "join" }, updateUsers);
     ch.on("presence", { event: "leave" }, updateUsers);
 
-    // Typing broadcast listener
     ch.on("broadcast", { event: "typing" }, ({ payload }) => {
       const name = payload.user;
       if (name === username) return;
@@ -82,45 +112,47 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       setTimeout(() => setTyping((t) => t.filter((n) => n !== name)), 1500);
     });
 
-    // cleanup
     return () => {
       try {
         ch.untrack();
         supabase.removeChannel(ch);
-        window.removeEventListener("beforeunload", ch.untrack);
-        window.removeEventListener("pagehide", ch.untrack);
       } catch (err) {
         console.warn("Cleanup error:", err.message);
       }
     };
   }, [channel?.id, username]);
 
-  // ✅ auto-scroll on new messages
+  /* ---------------------- Auto Scroll ---------------------- */
   useEffect(() => {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
-  // ✅ message send
+  /* ---------------------- Send Message ---------------------- */
   const handleSend = async (text) => {
     if (!text.trim()) return;
-    await sendMessage({ channel_id: channel.id, sender: username, body: text });
+    await sendMessage({
+      channel_id: channel.id,
+      sender: username,
+      body: text,
+      status: "sent",
+    });
   };
 
-  // ✅ typing signal broadcast
-  const broadcastTyping = React.useRef();
+  /* ---------------------- Typing Broadcast ---------------------- */
+  const broadcastTyping = useRef();
   useEffect(() => {
     if (!channel?.id || !username) return;
     const ch = presenceChannel(channel.id + ":typing-signal", username);
-    broadcastTyping.current = () => {
+    broadcastTyping.current = () =>
       ch.send({
         type: "broadcast",
         event: "typing",
         payload: { user: username },
       });
-    };
     return () => ch.untrack();
   }, [channel?.id, username]);
 
+  /* ---------------------- Render ---------------------- */
   return (
     <div className="chat-screen">
       <Header onBack={onBack} onLogout={onLogout} />
@@ -135,7 +167,6 @@ export default function Chat({ username, channel, onBack, onLogout }) {
             {msgs.map((m) => (
               <MessageBubble key={m.id} me={m.sender === username} msg={m} />
             ))}
-
             {typing.length > 0 && <TypingIndicator />}
           </div>
 
@@ -144,7 +175,6 @@ export default function Chat({ username, channel, onBack, onLogout }) {
             onTyping={() => broadcastTyping.current?.()}
           />
         </div>
-
         <UserList users={users} typingUsers={typing} />
       </div>
     </div>
