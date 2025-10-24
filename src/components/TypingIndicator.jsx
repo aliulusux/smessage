@@ -12,6 +12,17 @@ export default function TypingIndicator({ typingUsers = [] }) {
       ? `${typingUsers.join(", ")} are typing...`
       : "Several people are typing...";
 
-  return <div className="typing-indicator">{text}</div>;
-    
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="typing-indicator"
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 5 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+      >
+        <em>{text}</em>
+      </motion.div>
+    </AnimatePresence>
+  );
 }
