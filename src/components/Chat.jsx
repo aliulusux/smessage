@@ -249,7 +249,11 @@ const handleTyping = () => {
             ))}
           </div>
 
-          <TypingIndicator typingUsers={typing.filter((n) => n !== username)} />
+          {typing.filter((n) => n !== username).length > 0 && (
+            <TypingIndicator
+              names={typing.filter((n) => n !== username)}
+            />
+          )}
 
           <MessageInput
             onSend={handleSend}
