@@ -815,10 +815,6 @@ input, select {
   justify-content: flex-end;
 }
 
-.bubble-wrap.other {
-  justify-content: flex-start;
-  background: var(--theme-accent, rgba(255,255,255,025));
-}
 .bubble-wrap.other .status-icon { 
   display: none; 
 }
