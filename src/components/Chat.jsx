@@ -167,10 +167,9 @@ useEffect(() => {
   ch.on("presence", { event: "join" }, updateUsers);
   ch.on("presence", { event: "leave" }, updateUsers);
 
-  // 👇 Typing indicator event handler
+  // 🔹 Improved typing broadcast logic with smoother fade-out
   ch.on("broadcast", { event: "typing" }, ({ payload }) => {
     const name = payload.user;
-    // ignore self and duplicates
     if (!name || name === username) return;
 
     setTyping((prev) => {
@@ -179,10 +178,12 @@ useEffect(() => {
       return Array.from(next);
     });
 
-    // auto-remove after 1.5 s
-    setTimeout(() => {
+    // reset fade timer per user
+    const key = `typing-${name}`;
+    clearTimeout(window[key]);
+    window[key] = setTimeout(() => {
       setTyping((prev) => prev.filter((n) => n !== name));
-    }, 1500);
+    }, 2500); // 2.5s ensures smoother fade sync
   });
 
   // ✅ save the channel reference globally for typing broadcast

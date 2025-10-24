@@ -7,13 +7,14 @@ export default function TypingIndicator({ typingUsers = [] }) {
 
   // control fade in/out
   useEffect(() => {
-    if (typingUsers.length > 0) {
-      setVisible(true);
-    } else {
-      const timeout = setTimeout(() => setVisible(false), 4000);
-      return () => clearTimeout(timeout);
-    }
-  }, [typingUsers]);
+  if (typingUsers.length > 0) {
+    setVisible(true);
+  } else {
+    // smooth fade-out 1s after last broadcast ends
+    const timeout = setTimeout(() => setVisible(false), 1200);
+    return () => clearTimeout(timeout);
+  }
+}, [typingUsers]);
 
   if (!visible) return null;
 
