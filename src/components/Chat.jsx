@@ -227,7 +227,7 @@ const handleTyping = () => {
 
           <MessageInput
             onSend={handleSend}
-            onTyping={() => broadcastTyping.current?.()}
+            onTyping={handleTyping}
           />
         </div>
 
