@@ -11,6 +11,7 @@ import {
   presenceChannel,
 } from "../lib/supabaseClient";
 import TypingIndicator from "./TypingIndicator.jsx";
+import "../styles.css";
 
 // --- helper to normalize/sanitize a message object
 function sanitizeMessage(raw) {
@@ -233,11 +234,11 @@ const handleTyping = () => {
           </div>
 
           {typing.filter((n) => n !== username).length > 0 && (
-            
+            <div className="typing-bar">
               <TypingIndicator
                 typingUsers={typing.filter((n) => n !== username)}
               />
-            
+            </div>
           )}
           <MessageInput
             onSend={handleSend}
