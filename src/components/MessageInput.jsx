@@ -1,34 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 
-export default function MessageInput({ onSend, onTypingStart, onTypingStop }) {
+export default function MessageInput({ onSend, onTyping }) {
   const [text, setText] = useState("");
   const ref = useRef(null);
-  const typingTimer = useRef(null);
-  const lastNonEmpty = useRef(false);
+  const lastPing = useRef(0);
 
-  // fire "start" only when transitioning empty -> non-empty
+  // ping "typing" at most every 500ms while there is text
   useEffect(() => {
-    const nonEmpty = text.trim().length > 0;
-
-    if (nonEmpty && !lastNonEmpty.current) {
-      // debounce a touch so we don’t spam
-      clearTimeout(typingTimer.current);
-      typingTimer.current = setTimeout(() => onTypingStart?.(), 120);
-    }
-    if (!nonEmpty && lastNonEmpty.current) {
-      onTypingStop?.();
-    }
-    lastNonEmpty.current = nonEmpty;
-
-    return () => clearTimeout(typingTimer.current);
-  }, [text, onTypingStart, onTypingStop]);
+    const id = setInterval(() => {
+      const now = Date.now();
+      if (text && now - lastPing.current > 500) {
+        lastPing.current = now;
+        onTyping?.();
+      }
+    }, 400);
+    return () => clearInterval(id);
+  }, [text, onTyping]);
 
   const submit = () => {
     const t = text.trim();
     if (!t) return;
     onSend?.(t);
     setText("");
-    onTypingStop?.();
     ref.current?.focus();
   };
 
@@ -38,12 +31,13 @@ export default function MessageInput({ onSend, onTypingStart, onTypingStop }) {
         ref={ref}
         placeholder="Type a message"
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          if (e.target.value) onTyping?.();
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") submit();
-        }}
-        onBlur={() => {
-          if (!text.trim()) onTypingStop?.();
+          else if (e.target.value) onTyping?.();
         }}
       />
       <button onClick={submit}>Send</button>
