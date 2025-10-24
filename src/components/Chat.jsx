@@ -78,6 +78,15 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
+  async function markMessagesAsSeen() {
+    const { data, error } = await supabase
+      .from("messages")
+      .update({ status: "seen" })
+      .eq("channel_id", channelId)
+      .neq("sender", username);
+  }
+  markMessagesAsSeen();
+
 
   const handleSend = async (text) => {
     await sendMessage({ channel_id: channel.id, sender: username, body: text });
