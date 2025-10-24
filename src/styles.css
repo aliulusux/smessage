@@ -818,6 +818,16 @@ input, select {
   border-radius: 8px;
 }
 
+.typing-bar {
+  position: relative;
+  width: 100%;
+  margin-bottom: 4px; /* keeps perfect spacing */
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding-left: 4px;
+}
+
 .typing-text {
   font-style: italic;
   opacity: 0.85;
@@ -847,12 +857,18 @@ input, select {
   40% { opacity: 1; transform: translateY(-2px); }
 }
 
+@keyframes fadeTyping {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .typing-indicator {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin: 10px 0;
-  padding-left: 10px;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--theme-accent);
+  opacity: 0.9;
+  pointer-events: none;
+  animation: fadeTyping 0.3s ease-in-out;
 }
 
 .typing-indicator-bottom {
