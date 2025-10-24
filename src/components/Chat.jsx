@@ -239,7 +239,6 @@ const handleTyping = () => {
               />
             </div>
           )}
-
           <MessageInput
             onSend={handleSend}
             onTyping={handleTyping}
