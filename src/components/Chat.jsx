@@ -193,23 +193,6 @@ useEffect(() => {
     await sendMessage({ channel_id: channel.id, sender: username, body: text });
   };
 
-  // typing signal (reuse presence channel via key)
-  const broadcastTyping = React.useRef();
-  useEffect(() => {
-    const ch = presenceChannel(channel.id + ":typing-signal", username);
-    broadcastTyping.current = () =>
-      ch.send({
-        type: "broadcast",
-        event: "typing",
-        payload: { user: username },
-      });
-    return () => {
-      try {
-        ch.untrack();
-      } catch {}
-    };
-  }, [channel.id, username]);
-
   return (
     <div className="chat-screen">
       <Header onBack={onBack} onLogout={onLogout} />
@@ -221,14 +204,12 @@ useEffect(() => {
           </div>
 
           <div className="messages" ref={listRef}>
-            {msgs
-              .filter(Boolean)
-              .map((m) => (
-                <MessageBubble key={m.id} me={m.sender === username} msg={m} />
-              ))}
-
-            {typing.length > 0 && <TypingIndicator typingUsers={typing} />}
+            {msgs.map(m => (
+              <MessageBubble key={m.id} me={m.sender === username} msg={m} />
+            ))}
           </div>
+
+          {typing.length > 0 && <TypingIndicator typingUsers={typing} />}
 
           <MessageInput
             onSend={handleSend}
