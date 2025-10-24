@@ -102,7 +102,6 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       config: { presence: { key: username } },
     });
 
-    // Track presence with username; state usernames → users list
     presence
       .on("presence", { event: "sync" }, () => {
         const state = presence.presenceState();
@@ -113,25 +112,24 @@ export default function Chat({ username, channel, onBack, onLogout }) {
         const name = payload?.user;
         if (!name || name === username) return;
 
-        // Add or refresh a timeout for this user
-        setTyping((prev) => {
-          if (prev.includes(name)) return prev;
-          return [...prev, name];
-        });
+        setTyping((prev) => (prev.includes(name) ? prev : [...prev, name]));
 
-        // Remove after 5s of inactivity
-        clearTimeout(presence._ti?.[name]);
+        // keep a timer per user
         presence._ti ||= {};
+        clearTimeout(presence._ti[name]);
         presence._ti[name] = setTimeout(() => {
           setTyping((prev) => prev.filter((n) => n !== name));
         }, 5000);
       });
 
-    presence.track({ user: username });
-    presence.subscribe();
+    // ✅ Wait for subscription before tracking presence
+    presence.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        presence.track({ user: username });
+      }
+    });
 
     return () => {
-      // cleanup typing timeouts
       if (presence._ti) Object.values(presence._ti).forEach(clearTimeout);
       supabase.removeChannel(presence);
     };
@@ -142,19 +140,28 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
-  // -------- Send / Typing
-  const handleSend = async (text) => {
-    await sendMessage({
-      channel_id: channel.id,
-      sender: username,
-      body: text,
+  const sendTyping = async () => {
+    const ch = supabase
+      .getChannels()
+      .find((c) => c.topic === `realtime:room:${channel.id}`);
+
+    // wait until subscribed
+    if (!ch || ch.state !== "joined") return;
+
+    ch.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { user: username },
     });
   };
 
   const sendTyping = async () => {
-    const ch = supabase.getChannels().find((c) => c.topic === `realtime:room:${channel.id}`);
-    // if not yet ready (very first keystroke), no-op
-    if (!ch) return;
+    const ch = supabase
+      .getChannels()
+      .find((c) => c.topic === `realtime:room:${channel.id}`);
+
+    if (!ch || ch.state !== "joined") return;
+
     ch.send({
       type: "broadcast",
       event: "typing",
