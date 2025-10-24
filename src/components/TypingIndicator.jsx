@@ -1,6 +1,14 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+
+  const text =
+    names.length === 1
+      ? `${names[0]} is typing...`
+      : names.length <= 3
+      ? `${names.join(", ")} are typing...`
+      : `Several users are typing...`;
+
 export default function TypingIndicator({ typingUsers = [] }) {
   if (typingUsers.length === 0) return null;
 
