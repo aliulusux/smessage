@@ -10,6 +10,7 @@ export default function TypingIndicator({ typingUsers = [] }) {
     if (typingUsers.length > 0) {
       setVisible(true);
     } else {
+      const timeout = setTimeout(() => setVisible(false), 4000);
       return () => clearTimeout(timeout);
     }
   }, [typingUsers]);
