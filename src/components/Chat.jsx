@@ -1,182 +1,83 @@
-import React, { useEffect, useRef, useState } from "react";
-import Header from "./Header.jsx";
-import UserList from "./UserList.jsx";
-import MessageInput from "./MessageInput.jsx";
-import MessageBubble from "./MessageBubble.jsx";
-import {
-  supabase,
-  listMessages,
-  sendMessage,
-  subscribeMessages,
-  presenceChannel,
-} from "../lib/supabaseClient";
-import { motion } from "framer-motion";
-import TypingIndicator from "./TypingIndicator.jsx";
+import React from "react";
+import "../styles.css";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, CheckCheck, Eye } from "lucide-react";
 
-export default function Chat({ username, channel, onBack, onLogout }) {
-  const [msgs, setMsgs] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [typing, setTyping] = useState([]);
-  const listRef = useRef(null);
-
-  /* ---------------------- Load History ---------------------- */
-  useEffect(() => {
-    (async () => {
-      if (channel?.id) {
-        const history = await listMessages(channel.id);
-        setMsgs(history || []);
-      }
-    })();
-  }, [channel?.id]);
-
-  /* ---------------------- Realtime Messages ---------------------- */
-  useEffect(() => {
-    if (!channel?.id) return;
-
-    const unsub = subscribeMessages(channel.id, (row) => {
-      setMsgs((m) => [...m, row]);
-      listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
-    });
-
-    // ✅ Listen for realtime updates (seen status etc.)
-    const updateSub = supabase
-      .channel(`messages-updates-${channel.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "messages",
-          filter: `channel_id=eq.${channel.id}`,
-        },
-        (payload) => {
-          setMsgs((prev) =>
-            prev.map((m) =>
-              m.id === payload.new.id ? { ...m, ...payload.new } : m
-            )
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      unsub && unsub();
-      supabase.removeChannel(updateSub);
-    };
-  }, [channel?.id]);
-
-  /* ---------------------- Mark Seen Logic ---------------------- */
-  useEffect(() => {
-    if (!channel?.id || !username) return;
-
-    const markSeen = async () => {
-      try {
-        const unseen = msgs.filter((m) => !m.seen && m.sender !== username);
-        if (unseen.length === 0) return;
-
-        const ids = unseen.map((m) => m.id);
-
-        await supabase
-          .from("messages")
-          .update({ seen: true, status: "seen" })
-          .in("id", ids)
-          .eq("channel_id", channel.id);
-      } catch (err) {
-        console.error("Error marking messages as seen:", err.message);
-      }
-    };
-
-    markSeen();
-  }, [msgs, username, channel?.id]);
-
-  /* ---------------------- Presence + Typing ---------------------- */
-  useEffect(() => {
-    if (!channel?.id || !username) return;
-
-    const ch = presenceChannel(channel.id, username);
-
-    const updateUsers = () => {
-      const state = ch.presenceState();
-      const names = Object.keys(state || {});
-      setUsers(names.sort((a, b) => a.localeCompare(b)));
-    };
-
-    ch.on("presence", { event: "sync" }, updateUsers);
-    ch.on("presence", { event: "join" }, updateUsers);
-    ch.on("presence", { event: "leave" }, updateUsers);
-
-    ch.on("broadcast", { event: "typing" }, ({ payload }) => {
-      const name = payload.user;
-      if (name === username) return;
-      setTyping((t) => Array.from(new Set([...t, name])));
-      setTimeout(() => setTyping((t) => t.filter((n) => n !== name)), 1500);
-    });
-
-    return () => {
-      try {
-        ch.untrack();
-        supabase.removeChannel(ch);
-      } catch (err) {
-        console.warn("Cleanup error:", err.message);
-      }
-    };
-  }, [channel?.id, username]);
-
-  /* ---------------------- Auto Scroll ---------------------- */
-  useEffect(() => {
-    listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
-  }, [msgs]);
-
-  /* ---------------------- Send Message ---------------------- */
-  const handleSend = async (text) => {
-    if (!text.trim()) return;
-    await sendMessage({
-      channel_id: channel.id,
-      sender: username,
-      body: text,
-      status: "sent",
-    });
-  };
-
-  /* ---------------------- Typing Broadcast ---------------------- */
-  const broadcastTyping = useRef();
-  useEffect(() => {
-    if (!channel?.id || !username) return;
-    const ch = presenceChannel(channel.id + ":typing-signal", username);
-    broadcastTyping.current = () =>
-      ch.send({
-        type: "broadcast",
-        event: "typing",
-        payload: { user: username },
-      });
-    return () => ch.untrack();
-  }, [channel?.id, username]);
-
-  /* ---------------------- Render ---------------------- */
+function StatusIcon({ status }) {
   return (
-    <div className="chat-screen">
-      <Header onBack={onBack} onLogout={onLogout} />
-      <div className="chat-body">
-        <div className="center">
-          <div className="room-head">
-            <h3>{channel?.name || "Chat"}</h3>
-            {channel?.is_private && <span className="lock">🔒 private</span>}
-          </div>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={status}
+        initial={{ opacity: 0, y: 2, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -2, scale: 0.9 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="status-icon"
+      >
+        {status === "pending" && <Check className="icon pending" size={13} />}
+        {status === "sent" && <Check className="icon sent" size={13} />}
+        {status === "delivered" && (
+          <CheckCheck className="icon delivered" size={13} />
+        )}
+        {status === "seen" && (
+          <motion.div
+            initial={{ opacity: 0.7, scale: 0.9 }}
+            animate={{
+              opacity: [0.7, 1, 0.7],
+              scale: [0.9, 1, 0.9],
+              filter: [
+                "drop-shadow(0 0 1px rgba(255,255,255,0.2))",
+                "drop-shadow(0 0 3px rgba(0,255,255,0.6))",
+                "drop-shadow(0 0 1px rgba(255,255,255,0.2))",
+              ],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 2.4,
+              ease: "easeInOut",
+            }}
+          >
+            <Eye className="icon seen-glow" size={13} />
+          </motion.div>
+        )}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
-          <div className="messages" ref={listRef}>
-            {msgs.map((m) => (
-              <MessageBubble key={m.id} me={m.sender === username} msg={m} />
-            ))}
-            {typing.length > 0 && <TypingIndicator />}
-          </div>
+export default function MessageBubble({ me, msg }) {
+  const formattedTime = new Date(msg.created_at).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-          <MessageInput
-            onSend={handleSend}
-            onTyping={() => broadcastTyping.current?.()}
-          />
+  return (
+    <div className={`bubble-wrap ${me ? "me" : ""}`}>
+      <motion.div
+        className={`message-bubble ${me ? "me" : ""}`}
+        initial={{ opacity: 0, y: 25, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 25 }}
+      >
+        {!me && <div className="sender">{msg.sender}</div>}
+
+        <div className="body">{msg.body}</div>
+
+        {/* bottom row for time + seen */}
+        <div className="meta">
+          <span className="time">{formattedTime}</span>
+          {me && (
+            <motion.div
+              className="tick-wrap"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
+              <StatusIcon status={msg.status || (msg.seen ? "seen" : "sent")} />
+            </motion.div>
+          )}
         </div>
-        <UserList users={users} typingUsers={typing} />
-      </div>
+      </motion.div>
     </div>
   );
 }

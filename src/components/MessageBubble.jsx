@@ -6,26 +6,69 @@ import { Check, CheckCheck, Eye } from "lucide-react";
 function StatusIcon({ status }) {
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={status}
-        initial={{ opacity: 0, y: 2 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -2 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="status-icon"
-      >
-        {status === "pending" && <Check className="icon pending" size={13} />}
-        {status === "delivered" && <CheckCheck className="icon delivered" size={13} />}
-        {status === "seen" && (
-          <motion.div
-            initial={{ opacity: 0.6 }}
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ repeat: Infinity, duration: 1.8 }}
-          >
-            <Eye className="icon seen" size={13} />
-          </motion.div>
-        )}
-      </motion.div>
+      {status === "pending" && (
+        <motion.div
+          key="pending"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="status-icon"
+        >
+          <Check className="icon pending" size={13} />
+        </motion.div>
+      )}
+
+      {status === "sent" && (
+        <motion.div
+          key="sent"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="status-icon"
+        >
+          <Check className="icon sent" size={13} />
+        </motion.div>
+      )}
+
+      {status === "delivered" && (
+        <motion.div
+          key="delivered"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="status-icon"
+        >
+          <CheckCheck className="icon delivered" size={13} />
+        </motion.div>
+      )}
+
+      {status === "seen" && (
+        <motion.div
+          key="seen"
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: 1,
+            scale: [0.95, 1, 0.95],
+            filter: [
+              "drop-shadow(0 0 0px rgba(64,224,208,0.3))",
+              "drop-shadow(0 0 5px rgba(64,224,208,0.7))",
+              "drop-shadow(0 0 0px rgba(64,224,208,0.3))",
+            ],
+          }}
+          exit={{ opacity: 0 }}
+          transition={{
+            opacity: { duration: 0.4 },
+            scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+            filter: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+          }}
+          className="status-icon"
+        >
+          <Eye className="icon seen-glow" size={13} />
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
@@ -36,21 +79,34 @@ export default function MessageBubble({ me, msg }) {
     minute: "2-digit",
   });
 
+  const effectiveStatus =
+    msg.status || (msg.seen ? "seen" : msg.delivered ? "delivered" : "sent");
+
   return (
-    <div className={`bubble-wrap ${me ? "me" : "other"}`}>
+    <div className={`bubble-wrap ${me ? "me" : ""}`}>
       <motion.div
-        className={`message-bubble ${me ? "me" : "other"}`}
+        className={`message-bubble ${me ? "me" : ""}`}
         initial={{ opacity: 0, y: 25, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.5 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 25 }}
       >
         {!me && <div className="sender">{msg.sender}</div>}
+
         <div className="body">{msg.body}</div>
 
-        {/* ✅ Small time + icon side by side */}
+        {/* Time + status row */}
         <div className="meta">
           <span className="time">{formattedTime}</span>
-          <StatusIcon status={msg.status} />
+          {me && (
+            <motion.div
+              className="tick-wrap"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
+              <StatusIcon status={effectiveStatus} />
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </div>
