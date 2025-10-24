@@ -74,10 +74,19 @@ function StatusIcon({ status }) {
 }
 
 export default function MessageBubble({ me, msg }) {
-  const formattedTime = new Date(msg.created_at).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  // ✅ Defensive fallback
+  if (!msg) return null;
+
+  const safeTime = msg.created_at
+    ? new Date(msg.created_at).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  const formattedTime = safeTime || "--:--";
+  const body = msg.body || "";
+  const sender = msg.sender || "Unknown";
 
   const effectiveStatus =
     msg.status || (msg.seen ? "seen" : msg.delivered ? "delivered" : "sent");
@@ -90,11 +99,10 @@ export default function MessageBubble({ me, msg }) {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 25 }}
       >
-        {!me && <div className="sender">{msg.sender}</div>}
+        {!me && <div className="sender">{sender}</div>}
 
-        <div className="body">{msg.body}</div>
+        <div className="body">{body}</div>
 
-        {/* Time + status row */}
         <div className="meta">
           <span className="time">{formattedTime}</span>
           {me && (
