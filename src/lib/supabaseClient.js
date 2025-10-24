@@ -51,7 +51,6 @@ export async function sendMessage({ channel_id, sender, body }) {
 
   if (error) console.error("SendMessage error:", error);
   return data?.[0];
-}
 
     // insert to supabase
     const { data, error } = await supabase
