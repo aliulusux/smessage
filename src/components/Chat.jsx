@@ -5,7 +5,7 @@ import MessageInput from "./MessageInput.jsx";
 import MessageBubble from "./MessageBubble.jsx";
 import { supabase, listMessages, sendMessage, subscribeMessages, presenceChannel } from "../lib/supabaseClient";
 import { motion } from "framer-motion";
-import TypingIndicator from "./TypingIndicator.jsx"
+import TypingIndicator from "./TypingIndicator.jsx";
 
 export default function Chat({ username, channel, onBack, onLogout }) {
   const [msgs, setMsgs] = useState([]);
@@ -13,35 +13,54 @@ export default function Chat({ username, channel, onBack, onLogout }) {
   const [typing, setTyping] = useState([]);
   const listRef = useRef(null);
 
-  // load history
+  // ✅ load chat history
   useEffect(() => {
-    (async () => setMsgs(await listMessages(channel.id)))();
-  }, [channel.id]);
+    (async () => {
+      if (channel?.id) {
+        const history = await listMessages(channel.id);
+        setMsgs(history || []);
+      }
+    })();
+  }, [channel?.id]);
 
-  // realtime messages
+  // ✅ realtime messages subscription
   useEffect(() => {
+    if (!channel?.id) return;
     const unsub = subscribeMessages(channel.id, (row) => {
       setMsgs((m) => [...m, row]);
       listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
     });
-    return () => unsub();
-  }, [channel.id]);
+    return () => unsub && unsub();
+  }, [channel?.id]);
 
+  // ✅ mark messages as seen when received or updated
   useEffect(() => {
-  const markSeen = async () => {
-    const unseen = msgs.filter(m => !m.seen && m.sender !== username);
-    for (const m of unseen) {
-      await supabase
-        .from("messages")
-        .update({ seen: true })
-        .eq("id", m.id);
-    }
-  };
-  markSeen();
-}, [msgs, username]);
+    if (!channel?.id || !username) return;
 
-  // presence + typing
+    const markSeen = async () => {
+      try {
+        const unseen = msgs.filter((m) => !m.seen && m.sender !== username);
+        if (unseen.length === 0) return;
+        const ids = unseen.map((m) => m.id);
+
+        await supabase
+          .from("messages")
+          .update({ seen: true, status: "seen" })
+          .in("id", ids)
+          .eq("channel_id", channel.id);
+
+      } catch (err) {
+        console.error("Error marking messages as seen:", err.message);
+      }
+    };
+
+    markSeen();
+  }, [msgs, username, channel?.id]);
+
+  // ✅ presence + typing
   useEffect(() => {
+    if (!channel?.id || !username) return;
+
     const ch = presenceChannel(channel.id, username);
 
     const updateUsers = () => {
@@ -50,14 +69,12 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       setUsers(names.sort((a, b) => a.localeCompare(b)));
     };
 
-    // 🔹 When users join/leave
+    // Presence tracking
     ch.on("presence", { event: "sync" }, updateUsers);
-
-    // 🔹 When users leave or disconnect
-    ch.on("presence", { event: "leave" }, updateUsers);
     ch.on("presence", { event: "join" }, updateUsers);
+    ch.on("presence", { event: "leave" }, updateUsers);
 
-    // 🔹 Typing indicator broadcast
+    // Typing broadcast listener
     ch.on("broadcast", { event: "typing" }, ({ payload }) => {
       const name = payload.user;
       if (name === username) return;
@@ -65,48 +82,44 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       setTimeout(() => setTyping((t) => t.filter((n) => n !== name)), 1500);
     });
 
-    // ✅ Proper cleanup
+    // cleanup
     return () => {
-      ch.untrack();
-      supabase.removeChannel(ch);
-      window.removeEventListener("beforeunload", ch.untrack);
-      window.removeEventListener("pagehide", ch.untrack);
+      try {
+        ch.untrack();
+        supabase.removeChannel(ch);
+        window.removeEventListener("beforeunload", ch.untrack);
+        window.removeEventListener("pagehide", ch.untrack);
+      } catch (err) {
+        console.warn("Cleanup error:", err.message);
+      }
     };
-  }, [channel.id, username]);
+  }, [channel?.id, username]);
 
+  // ✅ auto-scroll on new messages
   useEffect(() => {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
-  async function markMessagesAsSeen() {
-    const { data, error } = await supabase
-      .from("messages")
-      .update({ status: "seen" })
-      .eq("channel_id", channelId)
-      .neq("sender", username);
-  }
-  markMessagesAsSeen();
-
-
+  // ✅ message send
   const handleSend = async (text) => {
+    if (!text.trim()) return;
     await sendMessage({ channel_id: channel.id, sender: username, body: text });
   };
 
-  const handleTyping = () => {
-    // broadcast lightweight typing signal
-    // (no await for snappy UX)
-    try {
-      const ch = window.supabaseBroadcast ||= {};
-    } catch {}
-  };
-
-  // Real typing broadcast (reuse presence channel)
+  // ✅ typing signal broadcast
   const broadcastTyping = React.useRef();
   useEffect(() => {
+    if (!channel?.id || !username) return;
     const ch = presenceChannel(channel.id + ":typing-signal", username);
-    broadcastTyping.current = () => ch.send({ type: "broadcast", event: "typing", payload: { user: username } });
+    broadcastTyping.current = () => {
+      ch.send({
+        type: "broadcast",
+        event: "typing",
+        payload: { user: username },
+      });
+    };
     return () => ch.untrack();
-  }, [channel.id, username]);
+  }, [channel?.id, username]);
 
   return (
     <div className="chat-screen">
@@ -114,21 +127,24 @@ export default function Chat({ username, channel, onBack, onLogout }) {
       <div className="chat-body">
         <div className="center">
           <div className="room-head">
-            <h3>{channel.name}</h3>
-            {channel.is_private && <span className="lock">🔒 private</span>}
+            <h3>{channel?.name || "Chat"}</h3>
+            {channel?.is_private && <span className="lock">🔒 private</span>}
           </div>
+
           <div className="messages" ref={listRef}>
-            {msgs.map(m => (
-              <MessageBubble key={m.id} me={m.sender===username} msg={m} />
+            {msgs.map((m) => (
+              <MessageBubble key={m.id} me={m.sender === username} msg={m} />
             ))}
 
             {typing.length > 0 && <TypingIndicator />}
           </div>
+
           <MessageInput
             onSend={handleSend}
             onTyping={() => broadcastTyping.current?.()}
           />
         </div>
+
         <UserList users={users} typingUsers={typing} />
       </div>
     </div>
