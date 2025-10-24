@@ -223,7 +223,7 @@ const handleTyping = () => {
             ))}
           </div>
 
-          {typing.length > 0 && <TypingIndicator typingUsers={typing} />}
+          <TypingIndicator typingUsers={typing} />
 
           <MessageInput
             onSend={handleSend}
