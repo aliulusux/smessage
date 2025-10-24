@@ -1,86 +1,49 @@
 import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
-export default function MessageInput({ onSend, onTyping }) {
+export default function MessageInput({ onSend, onTypingStart, onTypingStop }) {
   const [text, setText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const ref = useRef(null);
-  const typingTimeout = useRef(null);
-  const lastTypingTime = useRef(0);
+  const typingTimer = useRef(null);
+  const lastNonEmpty = useRef(false);
 
-  // 🔹 Handle typing with instant trigger and persistence
-  const handleTyping = (value) => {
-    const now = Date.now();
+  // fire "start" only when transitioning empty -> non-empty
+  useEffect(() => {
+    const nonEmpty = text.trim().length > 0;
 
-    // Instantly trigger when typing starts
-    if (value.trim() && !isTyping) {
-      setIsTyping(true);
-      onTyping?.();
+    if (nonEmpty && !lastNonEmpty.current) {
+      // debounce a touch so we don’t spam
+      clearTimeout(typingTimer.current);
+      typingTimer.current = setTimeout(() => onTypingStart?.(), 120);
     }
-
-    // If input is empty, stop typing smoothly
-    if (!value.trim()) {
-      clearTimeout(typingTimeout.current);
-      lastTypingTime.current = 0;
-      setIsTyping(false);
-      return;
+    if (!nonEmpty && lastNonEmpty.current) {
+      onTypingStop?.();
     }
+    lastNonEmpty.current = nonEmpty;
 
-    // Throttle typing broadcasts (1s)
-    if (now - lastTypingTime.current > 1000) {
-      onTyping?.();
-      lastTypingTime.current = now;
-    }
+    return () => clearTimeout(typingTimer.current);
+  }, [text, onTypingStart, onTypingStop]);
 
-    // Reset timeout (keep typing visible for 4s after stop)
-    clearTimeout(typingTimeout.current);
-    typingTimeout.current = setTimeout(() => {
-      setIsTyping(false);
-      lastTypingTime.current = 0;
-    }, 4000);
-  };
-
-  // 🔹 Submit message
   const submit = () => {
     const t = text.trim();
     if (!t) return;
-    onSend(t);
+    onSend?.(t);
     setText("");
-    clearTimeout(typingTimeout.current);
-    lastTypingTime.current = 0;
-    setIsTyping(false);
+    onTypingStop?.();
     ref.current?.focus();
   };
 
   return (
     <div className="inputbar">
-      {/* ✨ Smooth typing fade animation */}
-      <AnimatePresence>
-        {isTyping && (
-          <motion.div
-            className="typing-indicator"
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5, transition: { duration: 0.3 } }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            typing...
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <input
         ref={ref}
         placeholder="Type a message"
         value={text}
-        onChange={(e) => {
-          const value = e.target.value;
-          setText(value);
-          handleTyping(value);
-        }}
+        onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") submit();
-          else handleTyping(e.target.value);
+        }}
+        onBlur={() => {
+          if (!text.trim()) onTypingStop?.();
         }}
       />
       <button onClick={submit}>Send</button>

@@ -13,63 +13,51 @@ import {
 import TypingIndicator from "./TypingIndicator.jsx";
 import "../styles.css";
 
-// --- helper to normalize/sanitize a message object
+// normalize every message so UI never crashes if some field is missing
 function sanitizeMessage(raw) {
   if (!raw || typeof raw !== "object") return null;
-
-  // normalize created_at to an ISO string
-  let createdISO = "";
-  if (typeof raw.created_at === "string") {
-    createdISO = raw.created_at;
-  } else if (raw.created_at instanceof Date) {
-    createdISO = raw.created_at.toISOString();
-  } else {
-    // fallback: generate a timestamp so UI never crashes
-    createdISO = new Date().toISOString();
-  }
+  const iso =
+    typeof raw.created_at === "string"
+      ? raw.created_at
+      : raw.created_at instanceof Date
+      ? raw.created_at.toISOString()
+      : new Date().toISOString();
 
   return {
     id: raw.id ?? crypto.randomUUID(),
+    channel_id: raw.channel_id,
     sender: raw.sender ?? "unknown",
     body: raw.body ?? "",
-    created_at: createdISO,
+    created_at: iso,
     seen: Boolean(raw.seen),
-    // status is optional; keep your existing logic
     status:
-      raw.status ??
-      (raw.seen ? "seen" : raw.delivered ? "delivered" : "sent") ??
-      "sent",
-    channel_id: raw.channel_id,
+      raw.status ?? (raw.seen ? "seen" : raw.delivered ? "delivered" : "sent"),
   };
 }
 
 export default function Chat({ username, channel, onBack, onLogout }) {
   const [msgs, setMsgs] = useState([]);
   const [users, setUsers] = useState([]);
-  const [typing, setTyping] = useState([]);
+  const [typing, setTyping] = useState([]); // array of names currently typing (others only)
   const listRef = useRef(null);
 
-  // load history
+  // ---------- history ----------
   useEffect(() => {
     (async () => {
       const rows = await listMessages(channel.id);
-      const safe = (Array.isArray(rows) ? rows : [])
-        .map(sanitizeMessage)
-        .filter(Boolean);
+      const safe = (Array.isArray(rows) ? rows : []).map(sanitizeMessage).filter(Boolean);
       setMsgs(safe);
     })();
   }, [channel.id]);
 
-  // realtime messages
+  // ---------- realtime messages ----------
   useEffect(() => {
     const unsub = subscribeMessages(channel.id, (payloadRow) => {
-      // payload could be {new: row} or the row directly depending on your helper
       const maybeRow = payloadRow?.new ?? payloadRow;
       const safe = sanitizeMessage(maybeRow);
       if (!safe) return;
 
       setMsgs((prev) => {
-        // de-dupe by id and keep order with the new one at the end
         const without = prev.filter((m) => m.id !== safe.id);
         return [...without, safe];
       });
@@ -79,142 +67,113 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     return () => unsub();
   }, [channel.id]);
 
-// --- mark others' messages as seen and broadcast it ---
-useEffect(() => {
-  const markSeen = async () => {
-    const unseen = msgs.filter(m => m.status !== "seen" && m.sender !== username);
-    if (unseen.length === 0) return;
-
-    const ids = unseen.map(m => Number(m.id));
-    const { error } = await supabase
-      .from("messages")
-      .update({ status: "seen" })
-      .in("id", ids);
-
-    if (error) {
-      console.warn("⚠️ Supabase markSeen error:", error);
-      return;
-    }
-
-    // update local
-    setMsgs(prev =>
-      prev.map(m =>
-        ids.includes(Number(m.id)) ? { ...m, status: "seen" } : m
-      )
-    );
-
-    // 🔹 broadcast to channel so sender updates instantly
-    if (broadcastSeen.current) {
-      ids.forEach(id => {
-        broadcastSeen.current({ id, reader: username });
+  // ---------- mark seen & broadcast ----------
+  const broadcastSeen = useRef();
+  useEffect(() => {
+    const seenCh = presenceChannel(channel.id + ":seen-signal", username);
+    broadcastSeen.current = ({ id, reader }) =>
+      seenCh.send({
+        type: "broadcast",
+        event: "seen",
+        payload: { id, reader },
+        self: false, // don't hear our own seen
       });
-    }
-  };
-  markSeen();
-}, [msgs, username]);
 
-// Real typing broadcast (reuse presence channel)
-const broadcastTyping = React.useRef();
-const broadcastSeen = React.useRef();
+    // apply remote seen instantly
+    seenCh.on("broadcast", { event: "seen" }, ({ payload }) => {
+      const { id } = payload || {};
+      setMsgs((prev) =>
+        prev.map((m) => (Number(m.id) === Number(id) ? { ...m, status: "seen" } : m))
+      );
+    });
 
-useEffect(() => {
-  const typingCh = presenceChannel(channel.id + ":typing-signal", username);
-  const seenCh = presenceChannel(channel.id + ":seen-signal", username);
+    return () => seenCh.untrack();
+  }, [channel.id, username]);
 
-  // typing broadcaster
-  broadcastTyping.current = () =>
-    typingCh.send({
+  useEffect(() => {
+    const markSeen = async () => {
+      const unseen = msgs.filter((m) => m.status !== "seen" && m.sender !== username);
+      if (!unseen.length) return;
+
+      const ids = unseen.map((m) => Number(m.id));
+      const { error } = await supabase.from("messages").update({ status: "seen" }).in("id", ids);
+      if (error) {
+        console.warn("markSeen error:", error);
+        return;
+      }
+
+      setMsgs((prev) => prev.map((m) => (ids.includes(Number(m.id)) ? { ...m, status: "seen" } : m)));
+      ids.forEach((id) => broadcastSeen.current?.({ id, reader: username }));
+    };
+    markSeen();
+  }, [msgs, username]);
+
+  // ---------- presence & typing ----------
+  const presenceRef = useRef();
+  useEffect(() => {
+    const ch = presenceChannel(channel.id, username);
+    presenceRef.current = ch;
+
+    const updateUsers = () => {
+      const names = Object.keys(ch.presenceState() || {});
+      setUsers(names.sort((a, b) => a.localeCompare(b)));
+    };
+
+    ch.on("presence", { event: "sync" }, updateUsers);
+    ch.on("presence", { event: "join" }, updateUsers);
+    ch.on("presence", { event: "leave" }, updateUsers);
+
+    // show when someone starts typing
+    ch.on("broadcast", { event: "typing_start" }, ({ payload }) => {
+      const who = payload?.user;
+      if (!who || who === username) return; // never show myself
+      setTyping((prev) => (prev.includes(who) ? prev : [...prev, who]));
+    });
+
+    // hide when they stop or send
+    ch.on("broadcast", { event: "typing_stop" }, ({ payload }) => {
+      const who = payload?.user;
+      if (!who) return;
+      setTyping((prev) => prev.filter((n) => n !== who));
+    });
+
+    return () => {
+      ch.untrack();
+      supabase.removeChannel(ch);
+    };
+  }, [channel.id, username]);
+
+  // helpers passed to <MessageInput/>
+  const typingStart = () => {
+    const ch = presenceRef.current;
+    if (!ch) return;
+    ch.send({
       type: "broadcast",
-      event: "typing",
+      event: "typing_start",
       payload: { user: username },
+      self: false, // <- crucial: don't hear our own typing
     });
-
-  // seen broadcaster
-  broadcastSeen.current = ({ id, reader }) =>
-    seenCh.send({
+  };
+  const typingStop = () => {
+    const ch = presenceRef.current;
+    if (!ch) return;
+    ch.send({
       type: "broadcast",
-      event: "seen",
-      payload: { id, reader },
+      event: "typing_stop",
+      payload: { user: username },
+      self: false,
     });
-
-  // listen for remote seen events
-  seenCh.on("broadcast", { event: "seen" }, ({ payload }) => {
-    const { id } = payload;
-    setMsgs(prev =>
-      prev.map(m =>
-        Number(m.id) === Number(id) ? { ...m, status: "seen" } : m
-      )
-    );
-  });
-
-  return () => {
-    typingCh.untrack();
-    seenCh.untrack();
-  };
-}, [channel.id, username]);
-
-// inside your main presence useEffect:
-useEffect(() => {
-  const ch = presenceChannel(channel.id, username);
-
-  const updateUsers = () => {
-    const state = ch.presenceState();
-    const names = Object.keys(state || {});
-    setUsers(names.sort((a, b) => a.localeCompare(b)));
   };
 
-  // Sync users
-  ch.on("presence", { event: "sync" }, updateUsers);
-  ch.on("presence", { event: "join" }, updateUsers);
-  ch.on("presence", { event: "leave" }, updateUsers);
-
-  // 🔹 Improved typing broadcast logic with smoother fade-out
-  ch.on("broadcast", { event: "typing" }, ({ payload }) => {
-    const name = payload.user;
-    if (!name || name === username) return;
-
-    setTyping((prev) => {
-      const next = new Set(prev);
-      next.add(name);
-      return Array.from(next);
-    });
-
-    // reset fade timer per user
-    const key = `typing-${name}`;
-    clearTimeout(window[key]);
-    window[key] = setTimeout(() => {
-      setTyping((prev) => prev.filter((n) => n !== name));
-    }, 2500); // 2.5s ensures smoother fade sync
-  });
-
-  // ✅ save the channel reference globally for typing broadcast
-  window.currentPresenceChannel = ch;
-
-  // Cleanup
-  return () => {
-    ch.untrack();
-    supabase.removeChannel(ch);
-  };
-}, [channel.id, username]);
-
-// ⌨️ Send typing signal using the same channel
-const handleTyping = () => {
-  const ch = window.currentPresenceChannel;
-  if (!ch) return;
-  ch.send({
-    type: "broadcast",
-    event: "typing",
-    payload: { user: username },
-  });
-};
-
-  // keep autoscroll on new messages (safe)
+  // autoscroll
   useEffect(() => {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
   const handleSend = async (text) => {
     await sendMessage({ channel_id: channel.id, sender: username, body: text });
+    // sending a message = you’re no longer typing
+    typingStop();
   };
 
   return (
@@ -228,24 +187,21 @@ const handleTyping = () => {
           </div>
 
           <div className="messages" ref={listRef}>
-            {msgs.map(m => (
+            {msgs.map((m) => (
               <MessageBubble key={m.id} me={m.sender === username} msg={m} />
             ))}
           </div>
 
-          {/* Typing indicator - others only */}
-          {typing.filter(name => name !== username).length > 0 && (
+          {/* only others’ typing */}
+          {typing.length > 0 && (
             <div className="typing-bar">
-              <TypingIndicator
-                typingUsers={typing.filter(name => name !== username)}
-                currentUser={username}
-              />
+              <TypingIndicator typingUsers={typing} currentUser={username} />
             </div>
           )}
 
-          {/* Message input */}
-          <MessageInput onSend={handleSend} onTyping={handleTyping} />
+          <MessageInput onSend={handleSend} onTypingStart={typingStart} onTypingStop={typingStop} />
         </div>
+        <UserList users={users} typingUsers={typing} />
       </div>
     </div>
   );
