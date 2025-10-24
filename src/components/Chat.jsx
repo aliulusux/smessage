@@ -167,26 +167,24 @@ useEffect(() => {
   ch.on("presence", { event: "join" }, updateUsers);
   ch.on("presence", { event: "leave" }, updateUsers);
 
-// ✅ Improved typing persistence logic
-const typingTimers = {};
+  // 🔹 Improved typing broadcast logic with smoother fade-out
+  ch.on("broadcast", { event: "typing" }, ({ payload }) => {
+    const name = payload.user;
+    if (!name || name === username) return;
 
-ch.on("broadcast", { event: "typing" }, ({ payload }) => {
-  const name = payload.user;
-  if (!name || name === username) return;
+    setTyping((prev) => {
+      const next = new Set(prev);
+      next.add(name);
+      return Array.from(next);
+    });
 
-  // Add the user if not already present
-  setTyping((prev) => {
-    if (!prev.includes(name)) return [...prev, name];
-    return prev;
+    // reset fade timer per user
+    const key = `typing-${name}`;
+    clearTimeout(window[key]);
+    window[key] = setTimeout(() => {
+      setTyping((prev) => prev.filter((n) => n !== name));
+    }, 2500); // 2.5s ensures smoother fade sync
   });
-
-  // Reset their removal timer (4 seconds of inactivity)
-  clearTimeout(typingTimers[name]);
-  typingTimers[name] = setTimeout(() => {
-    setTyping((prev) => prev.filter((n) => n !== name));
-    delete typingTimers[name];
-  }, 4000);
-});
 
   // ✅ save the channel reference globally for typing broadcast
   window.currentPresenceChannel = ch;
