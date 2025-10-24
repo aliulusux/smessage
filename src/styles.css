@@ -722,11 +722,7 @@ input, select {
 .icon.delivered {
   color: var(--text-color);
 }
-.icon.seen {
-  color: var(--input-glow);
-  opacity: 1;
-  filter: drop-shadow(0 0 6px var(--input-glow));
-}
+.icon.seen { color: var(--input-glow); opacity: 1; filter: drop-shadow(0 0 6px var(--input-glow)); }
 
 .message-bubble {
   display: inline-block;
@@ -846,4 +842,11 @@ input, select {
 
 .bubble-wrap.other .message-bubble {
   border-bottom-left-radius: 4px;
+}
+
+/* other bubble (left) – force neutral background/text */
+.message-bubble.other {
+  background: rgba(255,255,255,.08);
+  color: var(--text-color);
+  border-bottom-left-radius: 6px;
 }
