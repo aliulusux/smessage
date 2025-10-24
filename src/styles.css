@@ -846,3 +846,11 @@ input, select {
   color: var(--text-color);
   border-bottom-left-radius: 6px;
 }
+
+.icon { opacity: .7; transition: color .3s ease, opacity .3s ease; }
+[data-theme="light"] .icon { 
+  color: #12141a98; 
+}
+[data-theme="dark"]  .icon { 
+  color: rgba(255,255,255,.7); 
+}
