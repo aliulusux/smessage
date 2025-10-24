@@ -857,7 +857,6 @@ input, select {
   justify-content: center;
   align-items: center;
   width: fit-content;
-  max-width: 80%;
   pointer-events: none;
 }
 
@@ -870,14 +869,14 @@ input, select {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 6px 14px;
   backdrop-filter: blur(12px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   color: var(--typing-text-color);
-  font-size: 0.9rem;
-  font-weight: 400;
+  font-size: 0.85rem;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.3s ease;
 }
 
 .bubble-wrap {
