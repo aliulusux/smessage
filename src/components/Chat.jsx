@@ -114,21 +114,6 @@ useEffect(() => {
 
 // Real typing broadcast (reuse presence channel)
 const broadcastTyping = React.useRef();
-useEffect(() => {
-  const ch = presenceChannel(channel.id + ":typing-signal", username);
-  broadcastTyping.current = (() => {
-    let last = 0;
-    return () => {
-      const now = Date.now();
-      if (now - last > 1000) { // send every 1s max
-        ch.send({ type: "broadcast", event: "typing", payload: { user: username } });
-        last = now;
-      }
-    };
-  })();
-  return () => ch.untrack();
-}, [channel.id, username]);
-
 const broadcastSeen = React.useRef();
 
 useEffect(() => {
@@ -249,11 +234,7 @@ const handleTyping = () => {
             ))}
           </div>
 
-          {typing.filter((n) => n !== username).length > 0 && (
-            <TypingIndicator
-              names={typing.filter((n) => n !== username)}
-            />
-          )}
+          <TypingIndicator typingUsers={typing.filter((n) => n !== username)} />
 
           <MessageInput
             onSend={handleSend}
