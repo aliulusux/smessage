@@ -821,6 +821,7 @@ input, select {
 .typing-text {
   font-style: italic;
   opacity: 0.85;
+  color: var(--input-glow)
 }
 
 .typing-dots {
