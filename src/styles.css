@@ -850,7 +850,7 @@ input, select {
 .typing-indicator {
   font-style: italic;
   font-size: 0.9rem;
-  color: var(--theme-accent);
+  color: var(--typing-text-color);
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
   margin-bottom: 4px;
 }
