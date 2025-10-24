@@ -140,16 +140,19 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
-  // ⌨️ Send typing signal
-  const handleTyping = () => {
-    const ch = window.currentPresenceChannel;
-    if (!ch) return;
-    ch.send({
-      type: "broadcast",
-      event: "typing",
-      payload: { user: username },
-    });
-  };
+ const sendTyping = async () => {
+  const ch = supabase
+    .getChannels()
+    .find((c) => c.topic === `realtime:room:${channel.id}`);
+
+  if (!ch || ch.state !== "joined") return;
+
+  ch.send({
+    type: "broadcast",
+    event: "typing",
+    payload: { user: username },
+  });
+};
 
   // 💬 Send message
   const handleSend = async (text) => {
