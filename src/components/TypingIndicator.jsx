@@ -13,21 +13,6 @@ export default function TypingIndicator({ typingUsers = [] }) {
       : "Several people are typing...";
 
   return (
-    <AnimatePresence>
-      <motion.div
-        className="typing-inline"
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 4 }}
-        transition={{ duration: 0.25 }}
-      >
-        <span className="typing-text">{text}</span>
-        <div className="typing-dots">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+    <div className="typing-indicator">{text}</div>;
   );
 }
