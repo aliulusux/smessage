@@ -813,7 +813,7 @@ input, select {
   border-radius: 8px;
 }
 
-/* Typing indicator container — fixed just above input */
+/* Typing indicator container just above the input */
 .typing-bar {
   position: relative;
   bottom: 6px;
@@ -833,44 +833,41 @@ input, select {
   color: var(--input-glow)
 }
 
-/* Dots — glowing animation synced with theme color */
 .typing-dots {
   display: inline-flex;
-  gap: 4px;
-  margin-left: 4px;
+  gap: 3px;
+  margin-left: 2px;
 }
 
 .typing-dots span {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background-color: var(--theme-accent, #8da8ff);
-  box-shadow: 0 0 8px var(--theme-accent, #8da8ff);
-  animation: typingGlow 1.4s infinite ease-in-out;
+  box-shadow: 0 0 6px var(--theme-accent, #8da8ff);
+  animation: typingPulse 1.4s infinite ease-in-out;
 }
 
 .typing-dots span:nth-child(2) {
-  animation-delay: 0.25s;
+  animation-delay: 0.2s;
 }
 .typing-dots span:nth-child(3) {
-  animation-delay: 0.5s;
+  animation-delay: 0.4s;
 }
 
-@keyframes typingGlow {
+@keyframes typingPulse {
   0%, 80%, 100% {
-    opacity: 0.3;
+    opacity: 0.2;
     transform: translateY(0);
-    box-shadow: 0 0 4px var(--theme-accent, #8da8ff);
   }
   40% {
     opacity: 1;
     transform: translateY(-2px);
-    box-shadow: 0 0 12px var(--theme-accent, #8da8ff), 0 0 24px var(--theme-accent, #8da8ff);
   }
 }
 
-@keyframes fadeInTyping {
-  from { opacity: 0; transform: translateY(5px); }
+@keyframes fadeTypingIn {
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -901,18 +898,17 @@ input, select {
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-/* Typing text + dots group */
+/* Text and dots styling */
 .typing-inline {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 0.9rem;
   font-style: italic;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-color);
   user-select: none;
   pointer-events: none;
   opacity: 0.95;
-  animation: fadeInTyping 0.25s ease-out;
 }
 
 .glass-typing-box {
