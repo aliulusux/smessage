@@ -243,10 +243,9 @@ const handleTyping = () => {
           <MessageInput
             onSend={handleSend}
             onTyping={handleTyping}
-          />
-
-          <UserList users={users} typingUsers={typing} />
+          />   
         </div>
+        <UserList users={users} typingUsers={typing} />
       </div>
     </div>
   );
