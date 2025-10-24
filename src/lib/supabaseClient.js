@@ -44,17 +44,14 @@ export async function listMessages(channel_id, limit = 200) {
 }
 
 export async function sendMessage({ channel_id, sender, body }) {
-  try {
-    // local optimistic insert
-    const tempId = Date.now();
-    const localMessage = {
-      id: tempId,
-      channel_id,
-      sender,
-      body,
-      created_at: new Date().toISOString(),
-      status: "pending",
-    };
+  const { data, error } = await supabase
+    .from("messages")
+    .insert([{ channel_id, sender, body, status: "delivered" }])
+    .select();
+
+  if (error) console.error("SendMessage error:", error);
+  return data?.[0];
+}
 
     // insert to supabase
     const { data, error } = await supabase

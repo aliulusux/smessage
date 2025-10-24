@@ -78,16 +78,79 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     return () => unsub();
   }, [channel.id]);
 
-  // mark others' messages as seen (robust)
-  useEffect(() => {
-    (async () => {
-      const unseen = msgs.filter((m) => !m.seen && m.sender !== username);
-      if (unseen.length === 0) return;
+// --- mark others' messages as seen and broadcast it ---
+useEffect(() => {
+  const markSeen = async () => {
+    const unseen = msgs.filter(m => m.status !== "seen" && m.sender !== username);
+    if (unseen.length === 0) return;
 
-      const ids = unseen.map((m) => m.id);
-      await supabase.from("messages").update({ seen: true }).in("id", ids);
-    })();
-  }, [msgs, username]);
+    const ids = unseen.map(m => Number(m.id));
+    const { error } = await supabase
+      .from("messages")
+      .update({ status: "seen" })
+      .in("id", ids);
+
+    if (error) {
+      console.warn("⚠️ Supabase markSeen error:", error);
+      return;
+    }
+
+    // update local
+    setMsgs(prev =>
+      prev.map(m =>
+        ids.includes(Number(m.id)) ? { ...m, status: "seen" } : m
+      )
+    );
+
+    // 🔹 broadcast to channel so sender updates instantly
+    if (broadcastSeen.current) {
+      ids.forEach(id => {
+        broadcastSeen.current({ id, reader: username });
+      });
+    }
+  };
+  markSeen();
+}, [msgs, username]);
+
+// Real typing broadcast (reuse presence channel)
+const broadcastTyping = React.useRef();
+const broadcastSeen = React.useRef();
+
+useEffect(() => {
+  const typingCh = presenceChannel(channel.id + ":typing-signal", username);
+  const seenCh = presenceChannel(channel.id + ":seen-signal", username);
+
+  // typing broadcaster
+  broadcastTyping.current = () =>
+    typingCh.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { user: username },
+    });
+
+  // seen broadcaster
+  broadcastSeen.current = ({ id, reader }) =>
+    seenCh.send({
+      type: "broadcast",
+      event: "seen",
+      payload: { id, reader },
+    });
+
+  // listen for remote seen events
+  seenCh.on("broadcast", { event: "seen" }, ({ payload }) => {
+    const { id } = payload;
+    setMsgs(prev =>
+      prev.map(m =>
+        Number(m.id) === Number(id) ? { ...m, status: "seen" } : m
+      )
+    );
+  });
+
+  return () => {
+    typingCh.untrack();
+    seenCh.untrack();
+  };
+}, [channel.id, username]);
 
   // presence + typing
   useEffect(() => {
@@ -164,7 +227,7 @@ export default function Chat({ username, channel, onBack, onLogout }) {
                 <MessageBubble key={m.id} me={m.sender === username} msg={m} />
               ))}
 
-            {typing.length > 0 && <TypingIndicator />}
+            {typing.length > 0 && <TypingIndicator typingUsers={typing} />}
           </div>
 
           <MessageInput
