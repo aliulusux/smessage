@@ -823,6 +823,9 @@ input, select {
   justify-content: flex-start;
   background: var(--theme-accent, rgba(255,255,255,025));
 }
+.bubble-wrap.other .status-icon { 
+  display: none; 
+}
 
 .message-bubble {
   max-width: 55%;
@@ -842,6 +845,5 @@ input, select {
 }
 
 .bubble-wrap.other .message-bubble {
-  background: rgba(255, 255, 255, 0.08);
   border-bottom-left-radius: 4px;
 }
