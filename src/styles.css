@@ -833,7 +833,7 @@ input, select {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--accent-color, #9b5cff);
+  background: var(--typing-accent-color);
   opacity: 0.6;
   animation: blink 1.2s infinite ease-in-out;
 }
