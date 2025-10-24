@@ -12,7 +12,7 @@ export default function TypingIndicator({ typingUsers = [], currentUser }) {
 
   return (
     <div className="typing-inline" aria-live="polite">
-      <span className="typing-text">{label}…</span>
+      <span className="typing-text">{label}</span>
       <span className="typing-dots" aria-hidden="true">
         <span />
         <span />
