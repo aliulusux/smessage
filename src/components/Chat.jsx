@@ -1,87 +1,148 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Header from "./Header.jsx";
 import UserList from "./UserList.jsx";
 import MessageInput from "./MessageInput.jsx";
 import MessageBubble from "./MessageBubble.jsx";
+import TypingIndicator from "./TypingIndicator.jsx";
 import {
   supabase,
   listMessages,
   sendMessage,
-  subscribeMessages,
-  presenceChannel,
 } from "../lib/supabaseClient";
-import TypingIndicator from "./TypingIndicator.jsx";
 
+/**
+ * This version uses:
+ * - one realtime channel for presence+typing per room
+ * - one realtime channel for message INSERT + UPDATE (status changes)
+ * - marks others' messages as seen and reflects it locally
+ */
 export default function Chat({ username, channel, onBack, onLogout }) {
   const [msgs, setMsgs] = useState([]);
   const [users, setUsers] = useState([]);
   const [typing, setTyping] = useState([]);
   const listRef = useRef(null);
 
-  // load history
+  // -------- Load initial history
   useEffect(() => {
-    (async () => setMsgs(await listMessages(channel.id)))();
+    (async () => {
+      const rows = await listMessages(channel.id);
+      setMsgs(rows || []);
+    })();
   }, [channel.id]);
 
-  // realtime messages
+  // -------- Realtime: messages (INSERT + UPDATE)
   useEffect(() => {
-    const unsub = subscribeMessages(channel.id, (row) => {
-      setMsgs((m) => [...m, row]);
-      listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
-    });
-    return () => unsub();
-  }, [channel.id]);
+    const rt = supabase
+      .channel(`messages:${channel.id}`)
 
-  // mark seen (optional — keep your existing version if you prefer)
-  useEffect(() => {
-    const markSeen = async () => {
-      const unseen = msgs.filter((m) => !m.seen && m.sender !== username);
-      for (const m of unseen) {
-        await supabase.from("messages").update({ seen: true }).eq("id", m.id);
-      }
-    };
-    if (msgs.length) markSeen();
-  }, [msgs, username]);
+      // New messages in this room
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `channel_id=eq.${channel.id}`,
+        },
+        (payload) => {
+          const row = payload.new;
+          setMsgs((m) => [...m, row]);
+          listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
+        }
+      )
 
-  // presence + typing
-  useEffect(() => {
-    const ch = presenceChannel(channel.id, username);
+      // Status updates (e.g., delivered -> seen)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `channel_id=eq.${channel.id}`,
+        },
+        (payload) => {
+          const row = payload.new;
+          setMsgs((m) => m.map((x) => (x.id === row.id ? row : x)));
+        }
+      )
 
-    const updateUsers = () => {
-      const state = ch.presenceState();
-      const names = Object.keys(state || {});
-      setUsers(names.sort((a, b) => a.localeCompare(b)));
-    };
-
-    ch.on("presence", { event: "sync" }, updateUsers);
-    ch.on("presence", { event: "leave" }, updateUsers);
-    ch.on("presence", { event: "join" }, updateUsers);
-
-    ch.on("broadcast", { event: "typing" }, ({ payload }) => {
-      const name = payload.user;
-      if (!name || name === username) return;
-      setTyping((prev) => {
-        const next = new Set(prev);
-        next.add(name);
-        return Array.from(next);
-      });
-      // keep them "typing" for 5s of inactivity
-      setTimeout(() => {
-        setTyping((prev) => prev.filter((n) => n !== name));
-      }, 5000);
-    });
+      .subscribe();
 
     return () => {
-      ch.untrack();
-      supabase.removeChannel(ch);
+      supabase.removeChannel(rt);
+    };
+  }, [channel.id]);
+
+  // -------- Mark others' messages as seen (immediately reflect)
+  useEffect(() => {
+    const run = async () => {
+      const unseen = msgs.filter(
+        (m) => m.sender !== username && m.status !== "seen"
+      );
+      if (unseen.length === 0) return;
+
+      // Optimistic local update
+      setMsgs((m) =>
+        m.map((x) =>
+          x.sender !== username && x.status !== "seen" ? { ...x, status: "seen" } : x
+        )
+      );
+
+      // Persist to DB
+      const ids = unseen.map((m) => m.id);
+      await supabase.from("messages").update({ status: "seen" }).in("id", ids);
+      // The UPDATE subscription above will also keep us in sync.
+    };
+    if (msgs.length) run();
+  }, [msgs, username]);
+
+  // -------- Realtime: presence + typing (single channel)
+  useEffect(() => {
+    const presence = supabase.channel(`room:${channel.id}`, {
+      config: { presence: { key: username } },
+    });
+
+    // Track presence with username; state usernames → users list
+    presence
+      .on("presence", { event: "sync" }, () => {
+        const state = presence.presenceState();
+        const names = Object.keys(state || {});
+        setUsers(names.sort((a, b) => a.localeCompare(b)));
+      })
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        const name = payload?.user;
+        if (!name || name === username) return;
+
+        // Add or refresh a timeout for this user
+        setTyping((prev) => {
+          if (prev.includes(name)) return prev;
+          return [...prev, name];
+        });
+
+        // Remove after 5s of inactivity
+        clearTimeout(presence._ti?.[name]);
+        presence._ti ||= {};
+        presence._ti[name] = setTimeout(() => {
+          setTyping((prev) => prev.filter((n) => n !== name));
+        }, 5000);
+      });
+
+    presence.track({ user: username });
+    presence.subscribe();
+
+    return () => {
+      // cleanup typing timeouts
+      if (presence._ti) Object.values(presence._ti).forEach(clearTimeout);
+      supabase.removeChannel(presence);
     };
   }, [channel.id, username]);
 
-  // keep autoscroll on new messages
+  // -------- Keep autoscroll
   useEffect(() => {
     listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth" });
   }, [msgs]);
 
+  // -------- Send / Typing
   const handleSend = async (text) => {
     await sendMessage({
       channel_id: channel.id,
@@ -90,18 +151,16 @@ export default function Chat({ username, channel, onBack, onLogout }) {
     });
   };
 
-  // broadcast typing with the original presence channel (fast + cheap)
-  const broadcastTyping = React.useRef();
-  useEffect(() => {
-    const ch = presenceChannel(channel.id + ":typing-signal", username);
-    broadcastTyping.current = () =>
-      ch.send({
-        type: "broadcast",
-        event: "typing",
-        payload: { user: username },
-      });
-    return () => ch.untrack();
-  }, [channel.id, username]);
+  const sendTyping = async () => {
+    const ch = supabase.getChannels().find((c) => c.topic === `realtime:room:${channel.id}`);
+    // if not yet ready (very first keystroke), no-op
+    if (!ch) return;
+    ch.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { user: username },
+    });
+  };
 
   return (
     <div className="chat-screen">
@@ -119,16 +178,10 @@ export default function Chat({ username, channel, onBack, onLogout }) {
             ))}
           </div>
 
-          {/* Typing indicator (others only) */}
-          <TypingIndicator
-            typingUsers={typing}
-            currentUser={username}
-          />
+          {/* Other users only */}
+          <TypingIndicator typingUsers={typing} currentUser={username} />
 
-          <MessageInput
-            onSend={handleSend}
-            onTyping={() => broadcastTyping.current?.()}
-          />
+          <MessageInput onSend={handleSend} onTyping={sendTyping} />
         </div>
 
         <UserList users={users} typingUsers={typing} />

@@ -5,11 +5,11 @@ export default function MessageInput({ onSend, onTyping }) {
   const ref = useRef(null);
   const lastPing = useRef(0);
 
-  // ping "typing" at most every 500ms while there is text
   useEffect(() => {
     const id = setInterval(() => {
+      if (!text) return;
       const now = Date.now();
-      if (text && now - lastPing.current > 500) {
+      if (now - lastPing.current > 500) {
         lastPing.current = now;
         onTyping?.();
       }
@@ -37,7 +37,7 @@ export default function MessageInput({ onSend, onTyping }) {
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") submit();
-          else if (e.target.value) onTyping?.();
+          else if (e.currentTarget.value) onTyping?.();
         }}
       />
       <button onClick={submit}>Send</button>
