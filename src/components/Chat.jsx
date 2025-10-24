@@ -192,13 +192,10 @@ export default function Chat({ username, channel, onBack, onLogout }) {
             ))}
           </div>
 
-          {/* Typing indicator (only others) */}
-          {typing.filter((n) => n !== username).length > 0 && (
+          {/* only others’ typing */}
+          {typing.length > 0 && (
             <div className="typing-bar">
-              <TypingIndicator
-                typingUsers={typing.filter((n) => n !== username)}
-                currentUser={username}
-              />
+              <TypingIndicator typingUsers={typing} currentUser={username} />
             </div>
           )}
 
